@@ -53,6 +53,12 @@ const ChatWindow = () => {
             // Add the new user message to history payload
             history.push({ role: "user", content: newMessage.text });
 
+            // Validate history for API
+            let apiMessages = history.slice(-10);
+            while (apiMessages.length > 0 && apiMessages[0].role !== 'user') {
+                apiMessages.shift();
+            }
+
             const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -61,13 +67,13 @@ const ChatWindow = () => {
                     'Authorization': `Bearer ${API_KEY}` // Fallback for OpenAI compatibility
                 },
                 body: JSON.stringify({
-                    model: "sarvam-2b-v0.5",
+                    model: "sarvam-m",
                     messages: [
                         {
                             role: "system",
                             content: "You are a helpful Indian AI assistant. Reply in the same language as the user (English, Hindi, Tamil, Hinglish, etc). Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate."
                         },
-                        ...history.slice(-10) // Keep context manageable
+                        ...apiMessages
                     ],
                     max_tokens: 300,
                     temperature: 0.7
