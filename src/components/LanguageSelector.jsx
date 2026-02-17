@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Check } from 'lucide-react';
+import { Globe, Check, ChevronDown } from 'lucide-react';
 
 export const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -43,30 +43,32 @@ export default function LanguageSelector() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2f2f2f] hover:bg-[#3a3a3a] text-white text-sm transition-colors border border-white/10"
             >
                 <Globe size={16} />
-                <span>{currentLang.name}</span>
+                <span className="hidden sm:inline">{currentLang.name}</span>
+                <span className="sm:hidden">{currentLang.flag}</span>
+                <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
-                    <div className="max-h-80 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-52 bg-[#2f2f2f] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="max-h-80 overflow-y-auto py-1">
                         {languages.map((lang) => (
-                            <div
+                            <button
                                 key={lang.code}
                                 onClick={() => handleLanguageChange(lang.code)}
-                                className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${i18n.language?.startsWith(lang.code)
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors text-left ${i18n.language?.startsWith(lang.code)
                                         ? 'bg-emerald-600 text-white'
-                                        : 'text-gray-300 hover:bg-gray-700'
+                                        : 'text-gray-300 hover:bg-[#3a3a3a]'
                                     }`}
                             >
                                 <span className="text-lg">{lang.flag}</span>
-                                <span className="flex-1 text-sm">{lang.name}</span>
+                                <span className="flex-1 text-sm font-medium">{lang.name}</span>
                                 {i18n.language?.startsWith(lang.code) && (
-                                    <Check size={16} />
+                                    <Check size={16} className="text-white" />
                                 )}
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User } from 'lucide-react';
+import { Send, Bot, User, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector, { languages } from './LanguageSelector';
 import Sidebar from './Sidebar';
@@ -21,6 +21,7 @@ const ChatWindow = () => {
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef(null);
+    const textareaRef = useRef(null);
 
     // Save conversations to localStorage
     useEffect(() => {
@@ -44,6 +45,14 @@ const ChatWindow = () => {
     };
 
     useEffect(scrollToBottom, [messages, isTyping]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+        }
+    }, [inputText]);
 
     const handleNewChat = () => {
         const newConv = {
@@ -209,7 +218,7 @@ const ChatWindow = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-950">
+        <div className="flex h-screen bg-[#212121] overflow-hidden">
             <Sidebar
                 conversations={conversations}
                 currentConversation={currentConversationId}
@@ -219,54 +228,72 @@ const ChatWindow = () => {
             />
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0">
                 {/* Header */}
-                <div className="border-b border-gray-800 bg-gray-950 px-6 py-3 flex items-center justify-between">
-                    <h1 className="text-lg font-semibold text-white">
-                        Sarvam AI <span className="text-sm text-gray-500 font-normal">Multilingual</span>
-                    </h1>
-                    <LanguageSelector />
-                </div>
+                <header className="sticky top-0 z-10 border-b border-white/10 bg-[#212121] backdrop-blur-sm">
+                    <div className="flex items-center justify-between h-14 px-4">
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-white">
+                                <Sparkles size={20} className="text-emerald-500" />
+                                <h1 className="text-base font-semibold">Sarvam AI</h1>
+                                <span className="text-xs text-gray-500 font-normal hidden sm:inline">Multilingual Assistant</span>
+                            </div>
+                        </div>
+                        <LanguageSelector />
+                    </div>
+                </header>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto">
                     {messages.length === 0 && !currentConversationId ? (
-                        <div className="h-full flex items-center justify-center">
-                            <div className="text-center">
-                                <Bot size={48} className="mx-auto mb-4 text-gray-600" />
+                        <div className="h-full flex items-center justify-center p-4">
+                            <div className="text-center max-w-md">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4">
+                                    <Bot size={32} className="text-emerald-500" />
+                                </div>
                                 <h2 className="text-2xl font-semibold text-white mb-2">
                                     {t('welcome')}
                                 </h2>
-                                <p className="text-gray-500">Start a conversation in any Indian language</p>
+                                <p className="text-gray-400 text-sm">
+                                    Start a conversation in any of the 10 Indian languages
+                                </p>
                             </div>
                         </div>
                     ) : (
-                        <>
-                            {messages.map((msg) => (
+                        <div className="pb-32">
+                            {messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`border-b border-gray-800/50 ${msg.sender === 'assistant' ? 'bg-gray-900/30' : ''
+                                    className={`group ${msg.sender === 'assistant' ? 'bg-[#2a2a2a]' : 'bg-[#212121]'
                                         }`}
                                 >
-                                    <div className="max-w-3xl mx-auto px-6 py-6 flex gap-6">
-                                        <div className="flex-shrink-0">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.sender === 'assistant'
-                                                    ? 'bg-emerald-600'
-                                                    : 'bg-gray-700'
-                                                }`}>
-                                                {msg.sender === 'assistant' ? (
-                                                    <Bot size={18} className="text-white" />
-                                                ) : (
-                                                    <User size={18} className="text-white" />
-                                                )}
+                                    <div className="max-w-3xl mx-auto px-4 py-6 md:px-6">
+                                        <div className="flex gap-4 md:gap-6">
+                                            {/* Avatar */}
+                                            <div className="flex-shrink-0">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.sender === 'assistant'
+                                                        ? 'bg-emerald-600'
+                                                        : 'bg-blue-600'
+                                                    }`}>
+                                                    {msg.sender === 'assistant' ? (
+                                                        <Bot size={18} className="text-white" />
+                                                    ) : (
+                                                        <User size={18} className="text-white" />
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex-1 pt-1">
-                                            <div className="text-sm font-semibold text-white mb-1">
-                                                {msg.sender === 'assistant' ? 'Sarvam AI' : 'You'}
-                                            </div>
-                                            <div className="text-gray-200 whitespace-pre-wrap">
-                                                {msg.isKey ? t(msg.text) : msg.text}
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-semibold text-white">
+                                                        {msg.sender === 'assistant' ? 'Sarvam AI' : 'You'}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">{msg.time}</span>
+                                                </div>
+                                                <div className="text-[15px] leading-7 text-gray-100 whitespace-pre-wrap break-words">
+                                                    {msg.isKey ? t(msg.text) : msg.text}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -274,58 +301,61 @@ const ChatWindow = () => {
                             ))}
 
                             {isTyping && (
-                                <div className="border-b border-gray-800/50 bg-gray-900/30">
-                                    <div className="max-w-3xl mx-auto px-6 py-6 flex gap-6">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
-                                                <Bot size={18} className="text-white" />
+                                <div className="bg-[#2a2a2a]">
+                                    <div className="max-w-3xl mx-auto px-4 py-6 md:px-6">
+                                        <div className="flex gap-4 md:gap-6">
+                                            <div className="flex-shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
+                                                    <Bot size={18} className="text-white" />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex-1 pt-1">
-                                            <div className="text-sm font-semibold text-white mb-1">Sarvam AI</div>
-                                            <div className="flex gap-1">
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full typing-dot"></div>
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full typing-dot"></div>
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full typing-dot"></div>
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                <div className="text-sm font-semibold text-white">Sarvam AI</div>
+                                                <div className="flex gap-1.5 py-2">
+                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
-                        </>
+                        </div>
                     )}
-                </div>
+                </main>
 
                 {/* Input Area */}
-                <div className="border-t border-gray-800 bg-gray-950 p-4">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="relative">
+                <footer className="sticky bottom-0 border-t border-white/10 bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-4 pb-6">
+                    <div className="max-w-3xl mx-auto px-4">
+                        <div className="relative bg-[#2f2f2f] rounded-2xl border border-white/10 shadow-lg">
                             <textarea
+                                ref={textareaRef}
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
-                                onKeyPress={handleKeyPress}
+                                onKeyDown={handleKeyPress}
                                 placeholder={t('placeholder')}
                                 rows={1}
-                                className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-600 placeholder-gray-500"
-                                style={{ minHeight: '52px', maxHeight: '200px' }}
+                                className="w-full bg-transparent text-white px-4 py-3 pr-12 resize-none focus:outline-none placeholder-gray-500 max-h-[200px]"
+                                style={{ minHeight: '52px' }}
                             />
                             <button
                                 onClick={handleSend}
                                 disabled={!inputText.trim() || isTyping}
-                                className={`absolute right-2 bottom-2 p-2 rounded-lg transition-colors ${inputText.trim() && !isTyping
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                className={`absolute right-2 bottom-2 p-2.5 rounded-lg transition-all ${inputText.trim() && !isTyping
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
                                         : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
                                 <Send size={18} />
                             </button>
                         </div>
-                        <p className="text-xs text-gray-600 text-center mt-2">
-                            AI can make mistakes. Check important info.
+                        <p className="text-xs text-gray-600 text-center mt-3">
+                            AI can make mistakes. Verify important information.
                         </p>
                     </div>
-                </div>
+                </footer>
             </div>
         </div>
     );
