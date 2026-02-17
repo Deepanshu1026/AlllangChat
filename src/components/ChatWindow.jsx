@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot } from 'lucide-react';
+import { Send, Bot, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import LanguageSelector from './LanguageSelector';
+import LanguageSelector, { languages } from './LanguageSelector';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
 const ChatWindow = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -44,7 +44,6 @@ const ChatWindow = () => {
 
         try {
             // Prepare history for context
-            // Translate any key-based messages to text before sending
             const history = messages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' : 'assistant',
                 content: msg.isKey ? t(msg.text) : msg.text
@@ -59,6 +58,11 @@ const ChatWindow = () => {
                 apiMessages.shift();
             }
 
+            // Determine target language for AI response
+            const currentLangCode = i18n.language || 'en';
+            const langObj = languages.find(l => currentLangCode.startsWith(l.code));
+            const targetLanguage = langObj ? langObj.name : "English";
+
             const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -71,7 +75,7 @@ const ChatWindow = () => {
                     messages: [
                         {
                             role: "system",
-                            content: "You are a helpful Indian AI assistant. Reply in the same language as the user (English, Hindi, Tamil, Hinglish, etc). Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate."
+                            content: `You are a helpful Indian AI assistant. Reply in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}.`
                         },
                         ...apiMessages
                     ],
@@ -121,32 +125,46 @@ const ChatWindow = () => {
             <div className="chat-header">
                 <div className="brand">
                     <h1>
-                        <Bot size={24} color="#4ade80" />
-                        {t('assistant')}
+                        Sarvam 2B <span style={{ opacity: 0.5, fontSize: '0.9em' }}>Multilingual</span>
                     </h1>
-                    <div className="status">
-                        <span className="status-dot"></span>
-                        {t('status_online')}
-                    </div>
                 </div>
                 <LanguageSelector />
             </div>
 
             <div className="messages-area">
-                <div className="message assistant">
-                    {t('welcome')}
+                {/* Welcome Message as a standard message */}
+                <div className="message-wrapper assistant">
+                    <div className="message-avatar">
+                        <Bot size={18} />
+                    </div>
+                    <div className="message-content">
+                        <div className="user-name">Sarvam AI</div>
+                        {t('welcome')}
+                    </div>
                 </div>
 
                 {messages.map((msg) => (
-                    <div key={msg.id} className={`message ${msg.sender}`}>
-                        {msg.isKey ? t(msg.text) : msg.text}
-                        <span className="time">{msg.time}</span>
+                    <div key={msg.id} className={`message-wrapper ${msg.sender}`}>
+                        <div className="message-avatar">
+                            {msg.sender === 'assistant' ? <Bot size={18} /> : <User size={18} />}
+                        </div>
+                        <div className="message-content">
+                            <div className="user-name">{msg.sender === 'assistant' ? 'Sarvam AI' : 'You'}</div>
+                            {msg.isKey ? t(msg.text) : msg.text}
+                        </div>
                     </div>
                 ))}
 
                 {isTyping && (
-                    <div className="message assistant" style={{ fontStyle: 'italic', opacity: 0.7 }}>
-                        {t('ai_typing')}
+                    <div className="message-wrapper assistant">
+                        <div className="message-avatar">
+                            <Bot size={18} />
+                        </div>
+                        <div className="typing-indicator">
+                            <div className="typing-dot"></div>
+                            <div className="typing-dot"></div>
+                            <div className="typing-dot"></div>
+                        </div>
                     </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -162,14 +180,17 @@ const ChatWindow = () => {
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress}
                     />
+                    <button
+                        className="send-btn"
+                        onClick={handleSend}
+                        disabled={!inputText.trim() || isTyping}
+                    >
+                        <Send size={16} />
+                    </button>
+                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#888', marginTop: '12px' }}>
+                        AI can make mistakes. Check important info.
+                    </div>
                 </div>
-                <button
-                    className="send-btn"
-                    onClick={handleSend}
-                    disabled={!inputText.trim() || isTyping}
-                >
-                    <Send size={20} />
-                </button>
             </div>
         </div>
     );
