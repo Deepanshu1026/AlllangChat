@@ -4,16 +4,16 @@
 
 @layer base {
   body {
-    @apply m-0 antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    @apply m-0 antialiased bg-[#212121];
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Slim & Dark */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -21,30 +21,35 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 4px;
+  background: #3f3f46;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: #52525b;
 }
 
-/* Smooth animations */
+/* Utilities */
 @layer utilities {
-  .animate-in {
-    animation-duration: 200ms;
-    animation-fill-mode: both;
+  .animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .fade-in {
-    animation-name: fadeIn;
+  .animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .slide-in-from-top-2 {
-    animation-name: slideInFromTop;
+  .scrollbar-width-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-width-none::-webkit-scrollbar {
+    display: none;
   }
 }
 
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -55,17 +60,19 @@
   }
 }
 
-@keyframes slideInFromTop {
+@keyframes slideUp {
   from {
-    transform: translateY(-8px);
+    opacity: 0;
+    transform: translateY(15px);
   }
 
   to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Typing animation for dots */
+/* Bounce for typing */
 @keyframes bounce {
 
   0%,
@@ -75,7 +82,7 @@
   }
 
   40% {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 }
 
@@ -83,9 +90,17 @@
   animation: bounce 1.4s infinite ease-in-out;
 }
 
-/* Focus styles */
-@layer components {
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-900;
-  }
+/* Prose overrides for better markdown look */
+.prose pre {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose p {
+  margin-bottom: 0.75em;
+}
+
+.prose ul {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }

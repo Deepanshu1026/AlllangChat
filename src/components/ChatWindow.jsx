@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import LanguageSelector, { languages } from './LanguageSelector';
 import Sidebar from './Sidebar';
 
@@ -11,24 +13,25 @@ const ChatWindow = () => {
 
     // Conversation management
     const [conversations, setConversations] = useState(() => {
-        const saved = localStorage.getItem('conversations');
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem('conversations');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
     });
-    const [currentConversationId, setCurrentConversationId] = useState(null);
 
-    // Current chat state
+    const [currentConversationId, setCurrentConversationId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
 
-    // Save conversations to localStorage
     useEffect(() => {
         localStorage.setItem('conversations', JSON.stringify(conversations));
     }, [conversations]);
 
-    // Load current conversation messages
     useEffect(() => {
         if (currentConversationId) {
             const conv = conversations.find(c => c.id === currentConversationId);
@@ -74,6 +77,7 @@ const ChatWindow = () => {
         setConversations(prev => prev.filter(c => c.id !== id));
         if (currentConversationId === id) {
             setCurrentConversationId(null);
+            setMessages([]);
         }
     };
 
@@ -98,10 +102,17 @@ const ChatWindow = () => {
         }));
     };
 
+    const handleSuggestionClick = (text) => {
+        setInputText(text);
+    };
+
+    const handleCopyMessage = (text) => {
+        navigator.clipboard.writeText(text);
+    };
+
     const handleSend = async () => {
         if (!inputText.trim()) return;
 
-        // Create new conversation if none selected
         let convId = currentConversationId;
         if (!convId) {
             const newConv = {
@@ -127,7 +138,6 @@ const ChatWindow = () => {
         setMessages(updatedMessages);
         updateConversationMessages(convId, updatedMessages);
 
-        // Update title if first message
         if (messages.length === 0) {
             updateConversationTitle(convId, inputText);
         }
@@ -162,11 +172,11 @@ const ChatWindow = () => {
                     messages: [
                         {
                             role: "system",
-                            content: `You are a helpful Indian AI assistant. Reply in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}.`
+                            content: `You are a helpful Indian AI assistant. Reply in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity.`
                         },
                         ...apiMessages
                     ],
-                    max_tokens: 300,
+                    max_tokens: 800,
                     temperature: 0.7
                 })
             });
@@ -197,7 +207,7 @@ const ChatWindow = () => {
             console.error("Request Error:", error);
             const errorMessage = {
                 id: Date.now() + 1,
-                text: "Network error connecting to Sarvam AI.",
+                text: "Network error connecting to Sarvam AI. Please check your internet connection.",
                 isKey: false,
                 sender: 'assistant',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -217,8 +227,15 @@ const ChatWindow = () => {
         }
     };
 
+    const suggestions = [
+        { icon: <Sparkles size={16} />, text: "Write a leave application for fever" },
+        { icon: <Bot size={16} />, text: "Explain UPI payments simply" },
+        { icon: <User size={16} />, text: "Compare 5G vs 4G features" },
+        { icon: <Sparkles size={16} />, text: "Tips for healthy diet in winter" }
+    ];
+
     return (
-        <div className="flex h-screen bg-[#212121] overflow-hidden">
+        <div className="flex h-screen bg-[#212121] overflow-hidden font-sans text-gray-100">
             <Sidebar
                 conversations={conversations}
                 currentConversation={currentConversationId}
@@ -228,72 +245,111 @@ const ChatWindow = () => {
             />
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Header */}
-                <header className="sticky top-0 z-10 border-b border-white/10 bg-[#212121] backdrop-blur-sm">
-                    <div className="flex items-center justify-between h-14 px-4">
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 text-white">
-                                <Sparkles size={20} className="text-emerald-500" />
-                                <h1 className="text-base font-semibold">Sarvam AI</h1>
-                                <span className="text-xs text-gray-500 font-normal hidden sm:inline">Multilingual Assistant</span>
-                            </div>
+            <div className="flex-1 flex flex-col min-w-0 relative">
+                {/* Modern Header - Adjusted Z-index */}
+                <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300">
+                    <div className="flex items-center justify-between h-14 px-4 sm:px-6">
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
+                            <h1 className="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors duration-200">
+                                Sarvam <span className="text-emerald-500">2B</span>
+                            </h1>
                         </div>
                         <LanguageSelector />
                     </div>
                 </header>
 
                 {/* Messages Area */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none">
                     {messages.length === 0 && !currentConversationId ? (
-                        <div className="h-full flex items-center justify-center p-4">
-                            <div className="text-center max-w-md">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4">
-                                    <Bot size={32} className="text-emerald-500" />
-                                </div>
-                                <h2 className="text-2xl font-semibold text-white mb-2">
-                                    {t('welcome')}
-                                </h2>
-                                <p className="text-gray-400 text-sm">
-                                    Start a conversation in any of the 10 Indian languages
-                                </p>
+                        <div className="h-full flex flex-col items-center justify-center p-4 animate-fade-in">
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-900/10 ring-1 ring-white/10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                                <Bot size={32} className="text-emerald-500" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2 text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                                {t('welcome')}
+                            </h2>
+                            <p className="text-gray-400 text-center max-w-md mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                                Ask me anything in English, Hindi, Tamil, or any other supported Indian language.
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                {suggestions.map((suggestion, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSuggestionClick(suggestion.text)}
+                                        className="flex items-center gap-3 p-3.5 text-left rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-emerald-500/30 transition-all duration-200 text-sm text-gray-300 hover:text-white group active:scale-[0.98]"
+                                        style={{ animationDelay: `${0.4 + (idx * 0.1)}s` }}
+                                    >
+                                        <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
+                                            {suggestion.icon}
+                                        </span>
+                                        <span className="truncate">{suggestion.text}</span>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     ) : (
-                        <div className="pb-32">
+                        <div className="pb-32 pt-4">
                             {messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`group ${msg.sender === 'assistant' ? 'bg-[#2a2a2a]' : 'bg-[#212121]'
+                                    className={`group w-full text-gray-100 border-b border-black/5 dark:border-white/5 animate-fade-in ${msg.sender === 'assistant' ? 'bg-[#444654]/0' : 'bg-transparent'
                                         }`}
                                 >
-                                    <div className="max-w-3xl mx-auto px-4 py-6 md:px-6">
-                                        <div className="flex gap-4 md:gap-6">
-                                            {/* Avatar */}
-                                            <div className="flex-shrink-0">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.sender === 'assistant'
-                                                        ? 'bg-emerald-600'
-                                                        : 'bg-blue-600'
-                                                    }`}>
-                                                    {msg.sender === 'assistant' ? (
-                                                        <Bot size={18} className="text-white" />
-                                                    ) : (
-                                                        <User size={18} className="text-white" />
-                                                    )}
-                                                </div>
+                                    <div className="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto">
+                                        <div className="flex-shrink-0 flex flex-col relative items-end">
+                                            <div className={`w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${msg.sender === 'assistant'
+                                                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                                                    : 'bg-gray-600'
+                                                }`}>
+                                                {msg.sender === 'assistant' ? (
+                                                    <Bot size={18} className="text-white" />
+                                                ) : (
+                                                    <User size={18} className="text-white" />
+                                                )}
                                             </div>
-
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0 space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-white">
-                                                        {msg.sender === 'assistant' ? 'Sarvam AI' : 'You'}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">{msg.time}</span>
-                                                </div>
-                                                <div className="text-[15px] leading-7 text-gray-100 whitespace-pre-wrap break-words">
-                                                    {msg.isKey ? t(msg.text) : msg.text}
-                                                </div>
+                                        </div>
+                                        <div className="relative flex-1 overflow-hidden">
+                                            <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
+                                                {msg.sender === 'assistant' ? (
+                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sarvam AI</span>
+                                                ) : 'You'}
+                                            </div>
+                                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400">
+                                                {msg.isKey ? (
+                                                    <p>{t(msg.text)}</p>
+                                                ) : (
+                                                    <ReactMarkdown
+                                                        children={msg.text}
+                                                        remarkPlugins={[remarkGfm]}
+                                                        components={{
+                                                            code({ node, className, children, ...props }) {
+                                                                const isBlock = String(children).includes('\n');
+                                                                return isBlock ? (
+                                                                    <div className="relative group/code my-4 rounded-xl overflow-hidden border border-white/10 shadow-xl">
+                                                                        <div className="absolute right-2 top-2 opacity-0 group-hover/code:opacity-100 transition-all duration-200 z-10 translate-y-1 group-hover/code:translate-y-0">
+                                                                            <button
+                                                                                onClick={() => handleCopyMessage(String(children))}
+                                                                                className="p-1.5 bg-gray-800/80 hover:bg-gray-700 rounded-md text-xs text-gray-300 hover:text-white flex items-center gap-1.5 backdrop-blur-md border border-white/10 transition-colors active:scale-95"
+                                                                            >
+                                                                                <Copy size={13} /> Copy
+                                                                            </button>
+                                                                        </div>
+                                                                        <pre className="!bg-[#0d0d0d] !p-4 !m-0 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700">
+                                                                            <code className={className || 'language-text'} {...props}>
+                                                                                {children}
+                                                                            </code>
+                                                                        </pre>
+                                                                    </div>
+                                                                ) : (
+                                                                    <code className="bg-white/10 px-1.5 py-0.5 rounded text-[13px] font-mono text-emerald-400 break-words" {...props}>
+                                                                        {children}
+                                                                    </code>
+                                                                )
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -301,21 +357,17 @@ const ChatWindow = () => {
                             ))}
 
                             {isTyping && (
-                                <div className="bg-[#2a2a2a]">
-                                    <div className="max-w-3xl mx-auto px-4 py-6 md:px-6">
-                                        <div className="flex gap-4 md:gap-6">
-                                            <div className="flex-shrink-0">
-                                                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
-                                                    <Bot size={18} className="text-white" />
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 min-w-0 space-y-2">
-                                                <div className="text-sm font-semibold text-white">Sarvam AI</div>
-                                                <div className="flex gap-1.5 py-2">
-                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                                </div>
+                                <div className="w-full text-gray-100 border-b border-black/5 dark:border-white/5 bg-[#444654]/0 animate-fade-in">
+                                    <div className="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto">
+                                        <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                                            <Loader2 size={18} className="text-white animate-spin" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-semibold text-sm mb-1 opacity-90 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sarvam AI</div>
+                                            <div className="flex gap-1.5 py-2">
+                                                <div className="w-2 h-2 bg-emerald-500/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                                <div className="w-2 h-2 bg-emerald-500/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                                <div className="w-2 h-2 bg-emerald-500/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                                             </div>
                                         </div>
                                     </div>
@@ -326,36 +378,42 @@ const ChatWindow = () => {
                     )}
                 </main>
 
-                {/* Input Area */}
-                <footer className="sticky bottom-0 border-t border-white/10 bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-4 pb-6">
-                    <div className="max-w-3xl mx-auto px-4">
-                        <div className="relative bg-[#2f2f2f] rounded-2xl border border-white/10 shadow-lg">
+                {/* Enhanced Input Area */}
+                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 z-20">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="relative flex items-end w-full p-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 transition-all duration-300 hover:border-gray-500/50">
                             <textarea
                                 ref={textareaRef}
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
                                 onKeyDown={handleKeyPress}
-                                placeholder={t('placeholder')}
+                                placeholder="Message Sarvam AI..."
                                 rows={1}
-                                className="w-full bg-transparent text-white px-4 py-3 pr-12 resize-none focus:outline-none placeholder-gray-500 max-h-[200px]"
-                                style={{ minHeight: '52px' }}
+                                className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 resize-none py-2 pr-10 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                                style={{ overflowY: 'auto' }}
                             />
                             <button
                                 onClick={handleSend}
                                 disabled={!inputText.trim() || isTyping}
-                                className={`absolute right-2 bottom-2 p-2.5 rounded-lg transition-all ${inputText.trim() && !isTyping
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
-                                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
+                                        ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
+                                        : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
                                     }`}
                             >
-                                <Send size={18} />
+                                {isTyping ? (
+                                    <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
+                                ) : (
+                                    <ArrowUp size={20} strokeWidth={2.5} />
+                                )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-600 text-center mt-3">
-                            AI can make mistakes. Verify important information.
-                        </p>
+                        <div className="text-center mt-3 animate-fade-in">
+                            <p className="text-[11px] text-gray-500">
+                                Sarvam AI can make mistakes. Check important info.
+                            </p>
+                        </div>
                     </div>
-                </footer>
+                </div>
             </div>
         </div>
     );
