@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -23,11 +23,53 @@ const ChatWindow = () => {
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
+    const recognitionRef = useRef(null);
 
-    // ... (conversations fetching logic remains same)
+    // Initialize Speech Recognition
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = false;
+
+            // Set language based on current i18n language or default to English
+            recognitionRef.current.lang = i18n.language || 'en-US';
+
+            recognitionRef.current.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setInputText(prev => prev + (prev ? ' ' : '') + transcript);
+                setIsListening(false);
+            };
+
+            recognitionRef.current.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                setIsListening(false);
+            };
+
+            recognitionRef.current.onend = () => {
+                setIsListening(false);
+            };
+        }
+    }, [i18n.language]);
+
+    const toggleListening = () => {
+        if (!recognitionRef.current) {
+            alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
+            return;
+        }
+
+        if (isListening) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    };
 
     const handleScroll = () => {
         if (scrollContainerRef.current) {
@@ -308,39 +350,54 @@ const ChatWindow = () => {
     };
 
     const suggestions = [
-        { icon: <Sparkles size={16} />, text: "Write a leave application for fever" },
-        { icon: <Bot size={16} />, text: "Explain UPI payments simply" },
-        { icon: <User size={16} />, text: "Compare 5G vs 4G features" },
-        { icon: <Sparkles size={16} />, text: "Tips for healthy diet in winter" }
+        { icon: <Sparkles size={16} />, text: "Draft a tweet about AI" },
+        { icon: <Bot size={16} />, text: "Explain quantum computing" },
+        { icon: <User size={16} />, text: "Write a poem about rain" },
+        { icon: <Sparkles size={16} />, text: "Give me study tips" }
     ];
 
     const InputArea = (
         <div className="max-w-3xl mx-auto w-full">
-            <div className="relative flex items-end w-full p-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 transition-all duration-300 hover:border-gray-500/50">
+            <div className={`relative flex items-end w-full p-3 bg-[#2f2f2f] border rounded-2xl shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-gray-600/30 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-gray-500/50'}`}>
                 <textarea
                     ref={textareaRef}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    placeholder="Message Sarvam AI..."
+                    placeholder={isListening ? "Listening..." : "Message Sarvam AI..."}
                     rows={1}
-                    className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 pr-10 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                    className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 pr-20 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
                     style={{ overflowY: 'auto' }}
                 />
-                <button
-                    onClick={handleSend}
-                    disabled={!inputText.trim() || isTyping}
-                    className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
-                        ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
-                        : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
-                        }`}
-                >
-                    {isTyping ? (
-                        <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
-                    ) : (
-                        <ArrowUp size={20} strokeWidth={2.5} />
-                    )}
-                </button>
+
+                <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                    {/* Mic Button */}
+                    <button
+                        onClick={toggleListening}
+                        className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${isListening
+                            ? 'bg-red-500/10 text-red-500 animate-pulse'
+                            : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                        title="Voice Input"
+                    >
+                        {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                    </button>
+
+                    {/* Send Button */}
+                    <button
+                        onClick={handleSend}
+                        disabled={!inputText.trim() || isTyping}
+                        className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
+                            : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
+                            }`}
+                    >
+                        {isTyping ? (
+                            <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
+                        ) : (
+                            <ArrowUp size={20} strokeWidth={2.5} />
+                        )}
+                    </button>
+                </div>
             </div>
             <div className="text-center mt-3 animate-fade-in">
                 <p className="text-[11px] text-gray-500">
@@ -364,7 +421,7 @@ const ChatWindow = () => {
             <div className="flex-1 flex flex-col min-w-0 relative">
                 {/* ... (header) */}
                 <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300">
-                    <div className="flex items-center justify-between h-14 px-4 sm:px-6">
+                    <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
                             <h1 className="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors duration-200">
                                 Sarvam <span className="text-emerald-500">2B</span>
@@ -378,38 +435,117 @@ const ChatWindow = () => {
                 <main
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none relative"
+                    className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none relative flex flex-col"
                 >
                     {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center p-4 animate-fade-in">
-                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-900/10 ring-1 ring-white/10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                                <Bot size={32} className="text-emerald-500" />
+                        <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[500px] animate-fade-in relative overflow-hidden">
+                            {/* Background Spotlight */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+                            {/* Logo */}
+                            <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-black rounded-3xl flex items-center justify-center mb-8 shadow-2xl ring-1 ring-white/10 animate-slide-up relative z-10">
+                                <Bot size={40} className="text-white drop-shadow-lg" />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2 text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                                {t('welcome')}
+
+                            {/* Welcome Text */}
+                            <h2 className="text-4xl font-semibold text-white mb-2 text-center tracking-tight animate-slide-up z-10" style={{ animationDelay: '0.1s' }}>
+                                Good to See You!
                             </h2>
-                            <p className="text-gray-400 text-center max-w-md mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-                                Ask me anything in English, Hindi, Tamil, or any other supported Indian language.
+                            <h3 className="text-3xl font-light text-gray-400 mb-4 text-center animate-slide-up z-10" style={{ animationDelay: '0.2s' }}>
+                                How Can I be an <span className="text-emerald-400 font-normal">Assistant?</span>
+                            </h3>
+                            <p className="text-gray-500 text-sm mb-12 animate-slide-up z-10" style={{ animationDelay: '0.3s' }}>
+                                I'm available 24/7 for you, ask me anything.
                             </p>
 
-                            <div className="w-full max-w-3xl px-4 mb-8 animate-slide-up" style={{ animationDelay: '0.35s' }}>
-                                {InputArea}
+                            {/* Status Indicators */}
+                            <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+                                <div className="flex items-center gap-2">
+                                    <Sparkles size={12} className="text-amber-400" />
+                                    <span>Unlock more capabilities</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span>Active extensions</span>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                            {/* Input Area Wrapper */}
+                            <div className="w-full max-w-2xl relative z-20 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                <div className={`relative flex items-center w-full p-2 bg-[#1a1a1a] border rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
+
+                                    {/* Plus Button */}
+                                    <button className="p-3 mx-1 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors">
+                                        <div className="w-5 h-5 flex items-center justify-center border border-current rounded-md overflow-hidden">
+                                            <span className="text-lg leading-none mb-0.5">+</span>
+                                        </div>
+                                    </button>
+
+                                    <div className="h-6 w-[1px] bg-white/10 mx-1" />
+
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={inputText}
+                                        onChange={(e) => setInputText(e.target.value)}
+                                        onKeyDown={handleKeyPress}
+                                        placeholder={isListening ? "Listening..." : "Ask anything..."}
+                                        rows={1}
+                                        className="flex-1 max-h-[150px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 outline-none resize-none py-3 px-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                                        style={{ overflowY: 'auto' }}
+                                    />
+
+                                    <div className="flex items-center gap-1 pr-2">
+                                        {/* Mic Button - Audio Wave Style */}
+                                        <button
+                                            onClick={toggleListening}
+                                            className={`p-2.5 rounded-full transition-all duration-300 ${isListening
+                                                ? 'bg-red-500 text-white animate-pulse'
+                                                : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                            title="Voice Input"
+                                        >
+                                            {isListening ? <MicOff size={18} /> : (
+                                                <div className="flex items-end gap-[2px] h-4">
+                                                    <div className="w-[2px] h-2 bg-current rounded-full" />
+                                                    <div className="w-[2px] h-4 bg-current rounded-full" />
+                                                    <div className="w-[2px] h-3 bg-current rounded-full" />
+                                                    <div className="w-[2px] h-2 bg-current rounded-full" />
+                                                </div>
+                                            )}
+                                        </button>
+
+                                        {/* Send Button */}
+                                        <button
+                                            onClick={handleSend}
+                                            disabled={!inputText.trim() || isTyping}
+                                            className={`p-2.5 rounded-full transition-all duration-300 ${inputText.trim() && !isTyping
+                                                ? 'bg-white text-black hover:bg-gray-200 scale-100'
+                                                : 'bg-transparent text-gray-600 cursor-not-allowed'
+                                                }`}
+                                        >
+                                            <ArrowUp size={18} strokeWidth={3} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Suggestions */}
+                            <div className="flex flex-wrap justify-center gap-3 w-full max-w-3xl px-4 mt-8 animate-slide-up z-10" style={{ animationDelay: '0.5s' }}>
                                 {suggestions.map((suggestion, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleSuggestionClick(suggestion.text)}
-                                        className="flex items-center gap-3 p-3.5 text-left rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-emerald-500/30 transition-all duration-200 text-sm text-gray-300 hover:text-white group active:scale-[0.98]"
-                                        style={{ animationDelay: `${0.4 + (idx * 0.1)}s` }}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
+                                        style={{ animationDelay: `${0.5 + (idx * 0.1)}s` }}
                                     >
-                                        <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
+                                        <span className="text-emerald-500 group-hover:text-emerald-400 transition-colors">
                                             {suggestion.icon}
                                         </span>
-                                        <span className="truncate">{suggestion.text}</span>
+                                        <span className="truncate max-w-[150px]">{suggestion.text}</span>
                                     </button>
                                 ))}
+                                <button className="px-3 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-all">
+                                    <span className="text-xs tracking-widest">•••</span>
+                                </button>
                             </div>
                         </div>
                     ) : (
