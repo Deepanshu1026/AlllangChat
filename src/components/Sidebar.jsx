@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Sidebar({ conversations, currentConversation, onNewChat, onSelectConversation, onDeleteConversation }) {
     const { t } = useTranslation();
     const { currentUser, logout } = useAuth();
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(window.innerWidth >= 768);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
