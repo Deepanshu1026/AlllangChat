@@ -1,13 +1,13 @@
 {
-  "welcome": "Namaskaram 🙏 Indian Chat Support ki swagatam",
-  "send": "Pampandi",
-  "placeholder": "Message rayandi...",
-  "select_language": "Bhasha enchukondi",
-  "chat_with_us": "Ma tho matladandi",
-  "status_online": "Online",
-  "ai_typing": "AI type chestundi...",
-  "user": "Meeru",
-  "assistant": "Sahayakudu",
-  "message_1": "Namaskaram! Nenu meeku ela sahayam cheyagalanu?",
-  "message_help": "Account, billing leda itara vishayallo sahayam cheyagalanu."
+  "welcome": "నమస్కారం 🙏 భారతీయ చాట్ మద్దతుకు స్వాగతం",
+  "send": "పంపండి",
+  "placeholder": "సందేశాన్ని టైప్ చేయండి...",
+  "select_language": "భాషను ఎంచుకోండి",
+  "chat_with_us": "మా సహాయకుడితో చాట్ చేయండి",
+  "status_online": "ఆన్‌లైన్",
+  "ai_typing": "AI టైప్ చేస్తోంది...",
+  "user": "మీరు",
+  "assistant": "సహాయకుడు",
+  "message_1": "నమస్కారం! ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
+  "message_help": "నేను ఖాతా, బిల్లింగ్ లేదా సాధారణ ప్రశ్నలతో సహాయపడగలను."
 }

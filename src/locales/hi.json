@@ -1,13 +1,13 @@
 {
-  "welcome": "Namaste 🙏 Indian Chat Support mein apka swagat hai",
-  "send": "Bhejein",
-  "placeholder": "Sandesh likhein...",
-  "select_language": "Bhasha Chunein",
-  "chat_with_us": "Hmare Assistant se baat karein",
-  "status_online": "Online",
-  "ai_typing": "AI likh raha hai...",
-  "user": "Aap",
-  "assistant": "Sahayak",
-  "message_1": "Namaste! Aaj main aapki kaise madad kar sakta hoon?",
-  "message_help": "Main account, billing ya samanya sawalon mein madad kar sakta hoon."
+  "welcome": "नमस्ते 🙏 भारतीय चैट सहयोग में आपका स्वागत है",
+  "send": "भेजें",
+  "placeholder": "संदेश लिखें...",
+  "select_language": "भाषा चुनें",
+  "chat_with_us": "हमारे सहायक से बात करें",
+  "status_online": "ऑनलाइन",
+  "ai_typing": "AI लिख रहा है...",
+  "user": "आप",
+  "assistant": "सहायक",
+  "message_1": "नमस्ते! आज मैं आपकी कैसे मदद कर सकता हूँ?",
+  "message_help": "मैं खाता, बिलिंग या सामान्य प्रश्नों में मदद कर सकता हूँ।"
 }

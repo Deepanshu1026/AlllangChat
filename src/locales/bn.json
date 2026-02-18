@@ -1,13 +1,13 @@
 {
-  "welcome": "Namaskar 🙏 Indian Chat Support-e aapnake swagato",
-  "send": "Pathan",
-  "placeholder": "Barta likhun...",
-  "select_language": "Bhasha bachun",
-  "chat_with_us": "Amader sathe kotha bolun",
-  "status_online": "Online",
-  "ai_typing": "AI likhche...",
-  "user": "Apni",
-  "assistant": "Sahayak",
-  "message_1": "Nomoshkar! Aami aapnake ki bhabe sahajyo korte pari?",
-  "message_help": "Account, billing ba onnyanyo bishoye sahajyo korte pari."
+  "welcome": "নমস্কার 🙏 ভারতীয় চ্যাট সাপোর্টে আপনাকে স্বাগত",
+  "send": "পাঠান",
+  "placeholder": "একটি বার্তা লিখুন...",
+  "select_language": "ভাষা নির্বাচন করুন",
+  "chat_with_us": "আমাদের সহকারীর সাথে চ্যাট করুন",
+  "status_online": "অনলাইন",
+  "ai_typing": "AI টাইপ করছে...",
+  "user": "আপনি",
+  "assistant": "সহকারী",
+  "message_1": "নমস্কার! আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+  "message_help": "আমি অ্যাকাউন্ট, বিলিং বা সাধারণ প্রশ্নের সাথে সাহায্য করতে পারি।"
 }

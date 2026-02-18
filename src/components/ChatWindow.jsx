@@ -5,21 +5,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import LanguageSelector, { languages } from './LanguageSelector';
 import Sidebar from './Sidebar';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
 const ChatWindow = () => {
     const { t, i18n } = useTranslation();
+    const { currentUser } = useAuth();
 
     // Conversation management
-    const [conversations, setConversations] = useState(() => {
-        try {
-            const saved = localStorage.getItem('conversations');
-            return saved ? JSON.parse(saved) : [];
-        } catch (e) {
-            return [];
-        }
-    });
+    const [conversations, setConversations] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -28,9 +25,38 @@ const ChatWindow = () => {
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
 
+    // Fetch conversations from Supabase
     useEffect(() => {
-        localStorage.setItem('conversations', JSON.stringify(conversations));
-    }, [conversations]);
+        const fetchConversations = async () => {
+            if (!currentUser) return;
+            setLoading(true);
+
+            // Sync user to Supabase users table (idempotent upsert)
+            const { error: userError } = await supabase
+                .from('users')
+                .upsert({
+                    id: currentUser.uid,
+                    email: currentUser.email
+                }, { onConflict: 'id' });
+
+            if (userError) console.error('Error syncing user:', userError);
+
+            const { data, error } = await supabase
+                .from('conversations')
+                .select('*')
+                .eq('user_id', currentUser.uid)
+                .order('updated_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching conversations:', error);
+            } else {
+                setConversations(data || []);
+            }
+            setLoading(false);
+        };
+
+        fetchConversations();
+    }, [currentUser]);
 
     useEffect(() => {
         if (currentConversationId) {
@@ -57,49 +83,90 @@ const ChatWindow = () => {
         }
     }, [inputText]);
 
-    const handleNewChat = () => {
+    // Auto-focus textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+        }
+    }, [currentConversationId]);
+
+    const handleNewChat = async () => {
         const newConv = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
+            user_id: currentUser.uid,
             title: 'New Chat',
             messages: [],
-            createdAt: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         };
+
+        // UI Optimistic Update
         setConversations(prev => [newConv, ...prev]);
         setCurrentConversationId(newConv.id);
         setMessages([]);
+
+        const { error } = await supabase
+            .from('conversations')
+            .insert([newConv]);
+
+        if (error) console.error('Error creating chat:', error);
     };
 
     const handleSelectConversation = (id) => {
         setCurrentConversationId(id);
     };
 
-    const handleDeleteConversation = (id) => {
+    const handleDeleteConversation = async (id) => {
+        // UI Optimistic Update
         setConversations(prev => prev.filter(c => c.id !== id));
         if (currentConversationId === id) {
             setCurrentConversationId(null);
             setMessages([]);
         }
+
+        const { error } = await supabase
+            .from('conversations')
+            .delete()
+            .eq('id', id);
+
+        if (error) console.error('Error deleting chat:', error);
     };
 
-    const updateConversationTitle = (convId, firstMessage) => {
+    const updateConversationTitle = async (convId, firstMessage) => {
+        const newTitle = firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '');
+
         setConversations(prev => prev.map(conv => {
             if (conv.id === convId && conv.title === 'New Chat') {
-                return {
-                    ...conv,
-                    title: firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '')
-                };
+                return { ...conv, title: newTitle };
             }
             return conv;
         }));
+
+        const { error } = await supabase
+            .from('conversations')
+            .update({ title: newTitle })
+            .eq('id', convId);
+
+        if (error) console.error('Error updating title:', error);
     };
 
-    const updateConversationMessages = (convId, newMessages) => {
+    const updateConversationMessages = async (convId, newMessages) => {
         setConversations(prev => prev.map(conv => {
             if (conv.id === convId) {
-                return { ...conv, messages: newMessages };
+                return { ...conv, messages: newMessages, updated_at: new Date().toISOString() };
             }
             return conv;
         }));
+
+        const { error } = await supabase
+            .from('conversations')
+            .update({
+                messages: newMessages,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', convId);
+
+        if (error) console.error('Error updating messages:', error);
     };
 
     const handleSuggestionClick = (text) => {
@@ -116,7 +183,7 @@ const ChatWindow = () => {
         let convId = currentConversationId;
         if (!convId) {
             const newConv = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 title: 'New Chat',
                 messages: [],
                 createdAt: new Date().toISOString()
@@ -158,7 +225,7 @@ const ChatWindow = () => {
 
             const currentLangCode = i18n.language || 'en';
             const langObj = languages.find(l => currentLangCode.startsWith(l.code));
-            const targetLanguage = langObj ? langObj.name : "English";
+            const targetLanguage = langObj ? langObj.englishName : "English";
 
             const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
                 method: 'POST',
@@ -172,7 +239,7 @@ const ChatWindow = () => {
                     messages: [
                         {
                             role: "system",
-                            content: `You are a helpful Indian AI assistant. Reply in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity.`
+                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity.`
                         },
                         ...apiMessages
                     ],
@@ -234,6 +301,42 @@ const ChatWindow = () => {
         { icon: <Sparkles size={16} />, text: "Tips for healthy diet in winter" }
     ];
 
+    const InputArea = (
+        <div className="max-w-3xl mx-auto w-full">
+            <div className="relative flex items-end w-full p-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 transition-all duration-300 hover:border-gray-500/50">
+                <textarea
+                    ref={textareaRef}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Message Sarvam AI..."
+                    rows={1}
+                    className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 pr-10 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                    style={{ overflowY: 'auto' }}
+                />
+                <button
+                    onClick={handleSend}
+                    disabled={!inputText.trim() || isTyping}
+                    className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
+                        ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
+                        : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
+                        }`}
+                >
+                    {isTyping ? (
+                        <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
+                    ) : (
+                        <ArrowUp size={20} strokeWidth={2.5} />
+                    )}
+                </button>
+            </div>
+            <div className="text-center mt-3 animate-fade-in">
+                <p className="text-[11px] text-gray-500">
+                    Sarvam AI can make mistakes. Check important info.
+                </p>
+            </div>
+        </div>
+    );
+
     return (
         <div className="flex h-screen bg-[#212121] overflow-hidden font-sans text-gray-100">
             <Sidebar
@@ -260,7 +363,7 @@ const ChatWindow = () => {
 
                 {/* Messages Area */}
                 <main className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none">
-                    {messages.length === 0 && !currentConversationId ? (
+                    {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center p-4 animate-fade-in">
                             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-900/10 ring-1 ring-white/10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                                 <Bot size={32} className="text-emerald-500" />
@@ -271,6 +374,10 @@ const ChatWindow = () => {
                             <p className="text-gray-400 text-center max-w-md mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
                                 Ask me anything in English, Hindi, Tamil, or any other supported Indian language.
                             </p>
+
+                            <div className="w-full max-w-3xl px-4 mb-8 animate-slide-up" style={{ animationDelay: '0.35s' }}>
+                                {InputArea}
+                            </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
                                 {suggestions.map((suggestion, idx) => (
@@ -299,8 +406,8 @@ const ChatWindow = () => {
                                     <div className="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto">
                                         <div className="flex-shrink-0 flex flex-col relative items-end">
                                             <div className={`w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${msg.sender === 'assistant'
-                                                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                                                    : 'bg-gray-600'
+                                                ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                                                : 'bg-gray-600'
                                                 }`}>
                                                 {msg.sender === 'assistant' ? (
                                                     <Bot size={18} className="text-white" />
@@ -378,42 +485,12 @@ const ChatWindow = () => {
                     )}
                 </main>
 
-                {/* Enhanced Input Area */}
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 z-20">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="relative flex items-end w-full p-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 transition-all duration-300 hover:border-gray-500/50">
-                            <textarea
-                                ref={textareaRef}
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                onKeyDown={handleKeyPress}
-                                placeholder="Message Sarvam AI..."
-                                rows={1}
-                                className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 resize-none py-2 pr-10 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
-                                style={{ overflowY: 'auto' }}
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!inputText.trim() || isTyping}
-                                className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
-                                        ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
-                                        : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
-                                    }`}
-                            >
-                                {isTyping ? (
-                                    <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
-                                ) : (
-                                    <ArrowUp size={20} strokeWidth={2.5} />
-                                )}
-                            </button>
-                        </div>
-                        <div className="text-center mt-3 animate-fade-in">
-                            <p className="text-[11px] text-gray-500">
-                                Sarvam AI can make mistakes. Check important info.
-                            </p>
-                        </div>
+                {/* Enhanced Input Area - Only show at bottom if there are messages */}
+                {messages.length > 0 && (
+                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 z-20">
+                        {InputArea}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

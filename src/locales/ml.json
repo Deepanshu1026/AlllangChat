@@ -1,13 +1,13 @@
 {
-  "welcome": "Namaskaram 🙏 Indian Chat Support ilekku swagatham",
-  "send": "Ayakku",
-  "placeholder": "Sandesham ezhuthu...",
-  "select_language": "Bhasha thiranjedukku",
-  "chat_with_us": "Njangalodu samsarikku",
-  "status_online": "Online",
-  "ai_typing": "AI type cheyyunnu...",
-  "user": "Ningal",
-  "assistant": "Sahayagi",
-  "message_1": "Namaskaram! Enikku ningale engane sahamikkan kazhiyum?",
-  "message_help": "Account, billing ennitanganulla karyangalil enikku sahayam nalkaan kazhiyum."
+  "welcome": "ನಮಸ್ಕಾರ 🙏 ഇന്ത്യൻ ചാറ്റ് സപ്പോർട്ടിലേക്ക് സ്വാഗതം",
+  "send": "അയക്കുക",
+  "placeholder": "സന്ദേശം ടൈപ്പ് ചെയ്യുക...",
+  "select_language": "ഭാഷ തിരഞ്ഞെടുക്കുക",
+  "chat_with_us": "ഞങ്ങളുടെ അസിസ്റ്റന്റുമായി ചാറ്റ് ചെയ്യുക",
+  "status_online": "ഓൺലൈൻ",
+  "ai_typing": "AI ടൈപ്പ് ചെയ്യുന്നു...",
+  "user": "നിങ്ങൾ",
+  "assistant": "അസിസ്റ്റന്റ്",
+  "message_1": "നമസ്കാരം! ഇന്ന് എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാനാകും?",
+  "message_help": "അക്കൗണ്ട്, ബില്ലിംഗ് അല്ലെങ്കിൽ പൊതുവായ ചോദ്യങ്ങളിൽ എനിക്ക് സഹായിക്കാനാകും."
 }

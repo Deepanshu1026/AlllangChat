@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanelLeftClose, PanelLeft, Plus, MessageSquare, Trash2, Settings } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Plus, MessageSquare, Trash2, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ conversations, currentConversation, onNewChat, onSelectConversation, onDeleteConversation }) {
     const { t } = useTranslation();
+    const { currentUser, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -12,6 +14,14 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error("Failed to log out", error);
+        }
+    };
 
     return (
         <>
@@ -115,16 +125,24 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
 
                 {/* Footer User Profile */}
                 <div className={`p-3 border-t border-white/5 mt-auto bg-[#171717] z-10 transition-opacity duration-300 ${!isOpen && 'opacity-0'}`}>
-                    <button className="flex items-center gap-3 w-full p-2 hover:bg-[#2f2f2f] rounded-xl transition-all duration-200 group active:scale-[0.98]">
+                    <div className="flex items-center gap-2 group">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-lg ring-2 ring-transparent group-hover:ring-white/10 transition-all">
-                            AI
+                            {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                            <div className="text-sm font-medium text-gray-200 group-hover:text-white truncate">Guest User</div>
-                            <div className="text-[10px] text-emerald-500 font-medium">Free Plan</div>
+                            <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                                {currentUser?.email || 'Guest'}
+                            </div>
+                            <div className="text-[10px] text-emerald-500 font-medium">Synced</div>
                         </div>
-                        <Settings size={16} className="text-gray-500 group-hover:text-white transition-transform group-hover:rotate-45 duration-500" />
-                    </button>
+                        <button
+                            onClick={handleLogout}
+                            className="p-1.5 hover:bg-white/10 rounded-md text-gray-500 hover:text-red-400 transition-colors"
+                            title="Sign out"
+                        >
+                            <LogOut size={16} />
+                        </button>
+                    </div>
                 </div>
             </aside>
 

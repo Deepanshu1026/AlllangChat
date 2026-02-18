@@ -1,13 +1,13 @@
 {
-  "welcome": "Vanakkam 🙏 Indian Chat Support ku varuga",
-  "send": "Anuppa",
-  "placeholder": "Seithiyai poduvaga...",
-  "select_language": "Mozhiyai Thearnthu Edukka",
-  "chat_with_us": "Engal udhaviyalarudan pesa",
-  "status_online": "Online",
-  "ai_typing": "AI seithiyai poduvaga...",
-  "user": "Neegal",
-  "assistant": "Udhaviyalar",
-  "message_1": "Vanakkam! Indru ungaluku eppadi uthavalam?",
-  "message_help": "Account, billing allathu potthu thagavalgalukku naan uthavalam."
+  "welcome": "வணக்கம் 🙏 இந்திய அரட்டை சேவைக்கு வரவேற்கிறோம்",
+  "send": "அனுப்பு",
+  "placeholder": "செய்தியை தட்டச்சு செய்யவும்...",
+  "select_language": "மொழியைத் தேர்ந்தெடுக்கவும்",
+  "chat_with_us": "எங்கள் உதவியாளருடன் அரட்டையடிக்கவும்",
+  "status_online": "ஆன்லைன்",
+  "ai_typing": "AI தட்டச்சு செய்கிறது...",
+  "user": "நீங்கள்",
+  "assistant": "உதவியாளர்",
+  "message_1": "வணக்கம்! இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+  "message_help": "கணக்கு, பில்லிங் அல்லது பொதுவான கேள்விகளுக்கு நான் உதவ முடியும்."
 }

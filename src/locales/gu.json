@@ -1,13 +1,13 @@
 {
-  "welcome": "Namaste 🙏 Indian Chat Support ma tamaru swagat che",
-  "send": "Moklo",
-  "placeholder": "Sandesho lakho...",
-  "select_language": "Bhasha pasand karo",
-  "chat_with_us": "Amari sathe vat karo",
-  "status_online": "Online",
-  "ai_typing": "AI lakhi rahyu che...",
-  "user": "Tame",
-  "assistant": "Sahayak",
-  "message_1": "Namaste! Hu tamari kem madad kari shaku?",
-  "message_help": "Hu account, billing athva anya prashno ma madad kari shaku chu."
+  "welcome": "નમસ્તે 🙏 ભારતીય ચેટ સપોર્ટમાં આપનું સ્વાગત છે",
+  "send": "મોકલો",
+  "placeholder": "સંદેશ લખો...",
+  "select_language": "ભાષા પસંદ કરો",
+  "chat_with_us": "અમારા સહાયક સાથે વાત કરો",
+  "status_online": "ઓનલાઇન",
+  "ai_typing": "AI લખી રહ્યું છે...",
+  "user": "તમે",
+  "assistant": "સહાયક",
+  "message_1": "નમસ્તે! આજે હું તમારી કેવી મદદ કરી શકું?",
+  "message_help": "હું એકાઉન્ટ, બિલિંગ અથવા સામાન્ય પ્રશ્નોમાં મદદ કરી શકું છું."
 }

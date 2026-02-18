@@ -3,16 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 
 export const languages = [
-    { code: 'en', name: 'English', flag: '🇬🇧' },
-    { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
-    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
-    { code: 'bn', name: 'বাংলা', flag: '🇮🇳' },
-    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
-    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
-    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
-    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
-    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
-    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' }
+    { code: 'en', name: 'English', englishName: 'English', flag: '🇬🇧' },
+    { code: 'hi', name: 'हिंदी', englishName: 'Hindi', flag: '🇮🇳' },
+    { code: 'ta', name: 'தமிழ்', englishName: 'Tamil', flag: '🇮🇳' },
+    { code: 'bn', name: 'বাংলা', englishName: 'Bengali', flag: '🇮🇳' },
+    { code: 'te', name: 'తెలుగు', englishName: 'Telugu', flag: '🇮🇳' },
+    { code: 'mr', name: 'मराठी', englishName: 'Marathi', flag: '🇮🇳' },
+    { code: 'gu', name: 'ગુજરાતી', englishName: 'Gujarati', flag: '🇮🇳' },
+    { code: 'kn', name: 'ಕನ್ನಡ', englishName: 'Kannada', flag: '🇮🇳' },
+    { code: 'ml', name: 'മലയാളം', englishName: 'Malayalam', flag: '🇮🇳' },
+    { code: 'pa', name: 'ਪੰਜਾਬੀ', englishName: 'Punjabi', flag: '🇮🇳' }
 ];
 
 export default function LanguageSelector() {
@@ -59,8 +59,8 @@ export default function LanguageSelector() {
                                 key={lang.code}
                                 onClick={() => handleLanguageChange(lang.code)}
                                 className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors text-left ${i18n.language?.startsWith(lang.code)
-                                        ? 'bg-emerald-600 text-white'
-                                        : 'text-gray-300 hover:bg-[#3a3a3a]'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a]'
                                     }`}
                             >
                                 <span className="text-lg">{lang.flag}</span>
