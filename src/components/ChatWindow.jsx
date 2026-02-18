@@ -520,12 +520,19 @@ const ChatWindow = () => {
 
                 {/* Enhanced Input Area - Only show at bottom if there are messages */}
                 {messages.length > 0 && (
-                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 z-20">
-                        <div className="max-w-3xl mx-auto w-full">
-                            {InputArea}
-                        </div>
+                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 lg:px-0 z-20">
+                        {InputArea}
                     </div>
                 )}
+                <style jsx>{`
+                    .scrollbar-width-none::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .scrollbar-width-none {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                `}</style>
             </div>
         </div>
     );
