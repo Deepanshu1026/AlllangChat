@@ -440,26 +440,26 @@ const ChatWindow = () => {
                     {messages.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[500px] animate-fade-in relative overflow-hidden">
                             {/* Background Spotlight */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[60px] md:blur-[100px] pointer-events-none" />
 
                             {/* Logo */}
-                            <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-black rounded-3xl flex items-center justify-center mb-8 shadow-2xl ring-1 ring-white/10 animate-slide-up relative z-10">
+                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-gray-800 to-black rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-2xl ring-1 ring-white/10 animate-slide-up relative z-10">
                                 <Bot size={40} className="text-white drop-shadow-lg" />
                             </div>
 
                             {/* Welcome Text */}
-                            <h2 className="text-4xl font-semibold text-white mb-2 text-center tracking-tight animate-slide-up z-10" style={{ animationDelay: '0.1s' }}>
+                            <h2 className="text-2xl md:text-4xl font-semibold text-white mb-2 text-center tracking-tight animate-slide-up z-10" style={{ animationDelay: '0.1s' }}>
                                 Good to See You!
                             </h2>
-                            <h3 className="text-3xl font-light text-gray-400 mb-4 text-center animate-slide-up z-10" style={{ animationDelay: '0.2s' }}>
+                            <h3 className="text-xl md:text-3xl font-light text-gray-400 mb-4 text-center animate-slide-up z-10" style={{ animationDelay: '0.2s' }}>
                                 How Can I be an <span className="text-emerald-400 font-normal">Assistant?</span>
                             </h3>
-                            <p className="text-gray-500 text-sm mb-12 animate-slide-up z-10" style={{ animationDelay: '0.3s' }}>
+                            <p className="text-gray-500 text-xs md:text-sm mb-8 md:mb-12 animate-slide-up z-10 text-center max-w-[80%]" style={{ animationDelay: '0.3s' }}>
                                 I'm available 24/7 for you, ask me anything.
                             </p>
 
                             {/* Status Indicators */}
-                            <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+                            <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[10px] md:text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
                                 <div className="flex items-center gap-2">
                                     <Sparkles size={12} className="text-amber-400" />
                                     <span>Unlock more capabilities</span>
@@ -471,17 +471,17 @@ const ChatWindow = () => {
                             </div>
 
                             {/* Input Area Wrapper */}
-                            <div className="w-full max-w-2xl relative z-20 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                                <div className={`relative flex items-center w-full p-2 bg-[#1a1a1a] border rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
+                            <div className="w-full max-w-2xl px-4 relative z-20 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                <div className={`relative flex items-center w-full p-1.5 md:p-2 bg-[#1a1a1a] border rounded-3xl md:rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
 
                                     {/* Plus Button */}
-                                    <button className="p-3 mx-1 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors">
+                                    <button className="hidden md:block p-3 mx-1 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors">
                                         <div className="w-5 h-5 flex items-center justify-center border border-current rounded-md overflow-hidden">
                                             <span className="text-lg leading-none mb-0.5">+</span>
                                         </div>
                                     </button>
 
-                                    <div className="h-6 w-[1px] bg-white/10 mx-1" />
+                                    <div className="hidden md:block h-6 w-[1px] bg-white/10 mx-1" />
 
                                     <textarea
                                         ref={textareaRef}
@@ -490,11 +490,11 @@ const ChatWindow = () => {
                                         onKeyDown={handleKeyPress}
                                         placeholder={isListening ? "Listening..." : "Ask anything..."}
                                         rows={1}
-                                        className="flex-1 max-h-[150px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 outline-none resize-none py-3 px-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                                        className="flex-1 max-h-[150px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 outline-none resize-none py-3 px-3 md:px-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-sm md:text-[15px]"
                                         style={{ overflowY: 'auto' }}
                                     />
 
-                                    <div className="flex items-center gap-1 pr-2">
+                                    <div className="flex items-center gap-1 pr-1 md:pr-2">
                                         {/* Mic Button - Audio Wave Style */}
                                         <button
                                             onClick={toggleListening}
@@ -529,18 +529,18 @@ const ChatWindow = () => {
                             </div>
 
                             {/* Suggestions */}
-                            <div className="flex flex-wrap justify-center gap-3 w-full max-w-3xl px-4 mt-8 animate-slide-up z-10" style={{ animationDelay: '0.5s' }}>
+                            <div className="flex flex-wrap justify-center gap-2 md:gap-3 w-full max-w-3xl px-4 mt-6 md:mt-8 animate-slide-up z-10" style={{ animationDelay: '0.5s' }}>
                                 {suggestions.map((suggestion, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleSuggestionClick(suggestion.text)}
-                                        className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
+                                        className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-[11px] md:text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
                                         style={{ animationDelay: `${0.5 + (idx * 0.1)}s` }}
                                     >
                                         <span className="text-emerald-500 group-hover:text-emerald-400 transition-colors">
                                             {suggestion.icon}
                                         </span>
-                                        <span className="truncate max-w-[150px]">{suggestion.text}</span>
+                                        <span className="truncate max-w-[100px] md:max-w-[150px]">{suggestion.text}</span>
                                     </button>
                                 ))}
                                 <button className="px-3 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-all">
