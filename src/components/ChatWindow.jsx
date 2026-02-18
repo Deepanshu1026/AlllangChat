@@ -22,8 +22,20 @@ const ChatWindow = () => {
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [showScrollButton, setShowScrollButton] = useState(false);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
+    const scrollContainerRef = useRef(null);
+
+    // ... (conversations fetching logic remains same)
+
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            setShowScrollButton(!isNearBottom);
+        }
+    };
 
     // Fetch conversations from Supabase
     useEffect(() => {
@@ -71,6 +83,7 @@ const ChatWindow = () => {
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        setShowScrollButton(false);
     };
 
     useEffect(scrollToBottom, [messages, isTyping]);
@@ -239,11 +252,11 @@ const ChatWindow = () => {
                     messages: [
                         {
                             role: "system",
-                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity.`
+                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity. IMPORTANT: If providing code, provide the FULL and COMPLETE code without placeholders or truncation.`
                         },
                         ...apiMessages
                     ],
-                    max_tokens: 800,
+                    max_tokens: 4096,
                     temperature: 0.7
                 })
             });
@@ -349,7 +362,7 @@ const ChatWindow = () => {
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0 relative">
-                {/* Modern Header - Adjusted Z-index */}
+                {/* ... (header) */}
                 <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300">
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
@@ -362,7 +375,11 @@ const ChatWindow = () => {
                 </header>
 
                 {/* Messages Area */}
-                <main className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none">
+                <main
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto scroll-smooth scrollbar-width-none relative"
+                >
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center p-4 animate-fade-in">
                             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-900/10 ring-1 ring-white/10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -400,28 +417,27 @@ const ChatWindow = () => {
                             {messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`group w-full text-gray-100 border-b border-black/5 dark:border-white/5 animate-fade-in ${msg.sender === 'assistant' ? 'bg-[#444654]/0' : 'bg-transparent'
-                                        }`}
+                                    className={`w-full text-gray-100 border-b border-black/5 dark:border-white/5 animate-fade-in ${msg.sender === 'assistant' ? 'bg-transparent' : 'bg-transparent'}`}
                                 >
-                                    <div className="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto">
-                                        <div className="flex-shrink-0 flex flex-col relative items-end">
-                                            <div className={`w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${msg.sender === 'assistant'
-                                                ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                                                : 'bg-gray-600'
-                                                }`}>
-                                                {msg.sender === 'assistant' ? (
+                                    <div className={`max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+
+                                        {/* Assistant Avatar - Left Side */}
+                                        {msg.sender === 'assistant' && (
+                                            <div className="flex-shrink-0 flex flex-col relative items-end">
+                                                <div className="w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600">
                                                     <Bot size={18} className="text-white" />
-                                                ) : (
-                                                    <User size={18} className="text-white" />
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="relative flex-1 overflow-hidden">
-                                            <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
-                                                {msg.sender === 'assistant' ? (
+                                        )}
+
+                                        {/* Message Content */}
+                                        <div className={`relative overflow-hidden ${msg.sender === 'user' ? 'bg-[#2f2f2f] rounded-2xl px-5 py-3 max-w-[85%]' : 'flex-1'}`}>
+                                            {msg.sender === 'assistant' && (
+                                                <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
                                                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sarvam AI</span>
-                                                ) : 'You'}
-                                            </div>
+                                                </div>
+                                            )}
+
                                             <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400">
                                                 {msg.isKey ? (
                                                     <p>{t(msg.text)}</p>
@@ -431,18 +447,24 @@ const ChatWindow = () => {
                                                         remarkPlugins={[remarkGfm]}
                                                         components={{
                                                             code({ node, className, children, ...props }) {
+                                                                const match = /language-(\w+)/.exec(className || '');
                                                                 const isBlock = String(children).includes('\n');
                                                                 return isBlock ? (
-                                                                    <div className="relative group/code my-4 rounded-xl overflow-hidden border border-white/10 shadow-xl">
-                                                                        <div className="absolute right-2 top-2 opacity-0 group-hover/code:opacity-100 transition-all duration-200 z-10 translate-y-1 group-hover/code:translate-y-0">
+                                                                    <div className="relative my-4 rounded-xl overflow-hidden border border-white/10 shadow-xl bg-[#0d0d0d] group/code">
+                                                                        <div className="absolute right-0 top-0 pr-4 pt-4 z-10 opacity-0 group-hover/code:opacity-100 transition-opacity">
                                                                             <button
                                                                                 onClick={() => handleCopyMessage(String(children))}
-                                                                                className="p-1.5 bg-gray-800/80 hover:bg-gray-700 rounded-md text-xs text-gray-300 hover:text-white flex items-center gap-1.5 backdrop-blur-md border border-white/10 transition-colors active:scale-95"
+                                                                                className="p-2 bg-gray-700/80 hover:bg-gray-600 rounded-lg text-xs text-gray-200 backdrop-blur-md border border-white/10 shadow-lg flex items-center gap-1.5 transition-all active:scale-95"
                                                                             >
-                                                                                <Copy size={13} /> Copy
+                                                                                <Copy size={14} /> Copy Code
                                                                             </button>
                                                                         </div>
-                                                                        <pre className="!bg-[#0d0d0d] !p-4 !m-0 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700">
+                                                                        {match && (
+                                                                            <div className="absolute left-4 top-4 text-xs font-mono text-gray-400 select-none pointer-events-none">
+                                                                                {match[1]}
+                                                                            </div>
+                                                                        )}
+                                                                        <pre className="!p-4 !pt-12 !m-0 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700">
                                                                             <code className={className || 'language-text'} {...props}>
                                                                                 {children}
                                                                             </code>
@@ -485,10 +507,23 @@ const ChatWindow = () => {
                     )}
                 </main>
 
+                {/* Scroll to Bottom Button */}
+                {showScrollButton && (
+                    <button
+                        onClick={scrollToBottom}
+                        className="absolute bottom-24 right-6 z-30 p-2 bg-[#2f2f2f] border border-white/10 rounded-full text-gray-400 hover:text-white shadow-xl hover:bg-[#3a3a3a] transition-all animate-bounce-in"
+                        aria-label="Scroll to bottom"
+                    >
+                        <ArrowUp size={20} />
+                    </button>
+                )}
+
                 {/* Enhanced Input Area - Only show at bottom if there are messages */}
                 {messages.length > 0 && (
                     <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4 z-20">
-                        {InputArea}
+                        <div className="max-w-3xl mx-auto w-full">
+                            {InputArea}
+                        </div>
                     </div>
                 )}
             </div>

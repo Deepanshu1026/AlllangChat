@@ -99,7 +99,7 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
                                         }`}
                                 >
                                     <MessageSquare size={16} className={`flex-shrink-0 transition-colors ${currentConversation === conv.id ? 'text-emerald-500' : 'text-gray-600 group-hover:text-emerald-500/70'}`} />
-                                    <span className="flex-1 text-sm truncate leading-tight font-light transition-all whitespace-nowrap">
+                                    <span className="flex-1 text-sm truncate leading-tight font-light transition-all whitespace-nowrap pr-8">
                                         {conv.title}
                                     </span>
 
@@ -126,9 +126,17 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
                 {/* Footer User Profile */}
                 <div className={`p-3 border-t border-white/5 mt-auto bg-[#171717] z-10 transition-opacity duration-300 ${!isOpen && 'opacity-0'}`}>
                     <div className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-lg ring-2 ring-transparent group-hover:ring-white/10 transition-all">
-                            {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
-                        </div>
+                        {currentUser?.photoURL ? (
+                            <img
+                                src={currentUser.photoURL}
+                                alt="Profile"
+                                className="w-8 h-8 rounded-full object-cover shadow-lg ring-2 ring-transparent group-hover:ring-white/10 transition-all"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold shadow-lg ring-2 ring-transparent group-hover:ring-white/10 transition-all">
+                                {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                        )}
                         <div className="flex-1 text-left min-w-0">
                             <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
                                 {currentUser?.email || 'Guest'}
