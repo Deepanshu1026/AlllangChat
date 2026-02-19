@@ -354,7 +354,7 @@ const ChatWindow = () => {
             console.error("Request Error:", error);
             const errorMessage = {
                 id: Date.now() + 1,
-                text: "Network error connecting to Sarvam AI. Please check your internet connection.",
+                text: "Network error connecting to Sensiq AI. Please check your internet connection.",
                 isKey: false,
                 sender: 'assistant',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -389,7 +389,7 @@ const ChatWindow = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    placeholder={isListening ? "Listening..." : "Message Sarvam AI..."}
+                    placeholder={isListening ? "Listening..." : "Message Sensiq AI..."}
                     rows={1}
                     className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 pr-20 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
                     style={{ overflowY: 'auto' }}
@@ -426,7 +426,7 @@ const ChatWindow = () => {
             </div>
             <div className="text-center mt-3 animate-fade-in">
                 <p className="text-[11px] text-gray-500">
-                    Sarvam AI can make mistakes. Check important info.
+                    Sensiq AI can make mistakes. Check important info.
                 </p>
             </div>
         </div>
@@ -449,7 +449,7 @@ const ChatWindow = () => {
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
                             <h1 className="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors duration-200">
-                                Sarvam <span className="text-emerald-500">2B</span>
+                                Sensiq <span className="text-emerald-500">AI</span>
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
@@ -605,7 +605,7 @@ const ChatWindow = () => {
                                         <div className={`relative overflow-hidden ${msg.sender === 'user' ? 'bg-[#2f2f2f] rounded-2xl px-5 py-3 max-w-[85%]' : 'flex-1'}`}>
                                             {msg.sender === 'assistant' && (
                                                 <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
-                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sarvam AI</span>
+                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sensiq AI</span>
                                                 </div>
                                             )}
 
@@ -663,7 +663,7 @@ const ChatWindow = () => {
                                             <Loader2 size={18} className="text-white animate-spin" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="font-semibold text-sm mb-1 opacity-90 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sarvam AI</div>
+                                            <div className="font-semibold text-sm mb-1 opacity-90 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sensiq AI</div>
                                             <div className="flex gap-1.5 py-2">
                                                 <div className="w-2 h-2 bg-emerald-500/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                                                 <div className="w-2 h-2 bg-emerald-500/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>

@@ -17,65 +17,65 @@ const Login = ({ onClose, isModal = false }) => {
     };
 
     const containerClasses = isModal
-        ? "relative w-full max-w-4xl h-[500px] flex overflow-hidden bg-[#1a1a1a] rounded-3xl border border-white/5 animate-scale-in"
+        ? "relative w-full max-w-5xl h-[550px] flex overflow-hidden bg-[#1a1a1a] rounded-3xl border border-white/5 animate-scale-in shadow-2xl mx-4 md:mx-0"
         : "w-full max-w-md animate-fade-in";
 
     return (
         <div className={isModal ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" : "min-h-screen bg-[#121212] flex items-center justify-center p-4"}>
-            <div className={containerClasses}>
+            <div className={containerClasses} onClick={(e) => e.stopPropagation()}>
                 {isModal && (
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
+                        className="absolute top-5 right-5 z-20 p-2 bg-black/20 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
                     >
                         ✕
                     </button>
                 )}
 
-                {/* Left Side: Branding & Visuals (Only visible in Modal mode or large screens) */}
-                <div className={`hidden md:flex w-1/2 relative bg-gradient-to-br from-emerald-900/40 via-[#1a1a1a] to-black items-center justify-center overflow-hidden border-r border-white/5`}>
+                {/* Left Side: Branding & Visuals (Visible on tablet+, large layout) */}
+                <div className="hidden md:flex w-1/2 relative bg-gradient-to-br from-emerald-900/40 via-[#1a1a1a] to-black items-center justify-center overflow-hidden border-r border-white/5">
                     {/* Background Elements */}
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent"></div>
 
-                    <div className="relative z-10 flex flex-col items-center text-center p-8 animate-slide-up">
-                        <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl flex items-center justify-center mb-6 ring-1 ring-white/20 shadow-lg shadow-emerald-500/20">
-                            <Bot size={40} className="text-white" />
+                    <div className="relative z-10 flex flex-col items-center text-center p-12 animate-slide-up">
+                        <div className="w-24 h-24 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl flex items-center justify-center mb-8 ring-1 ring-white/20 shadow-lg shadow-emerald-500/20">
+                            <Bot size={48} className="text-white" />
                         </div>
-                        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Sarvam AI</h2>
-                        <p className="text-gray-400 text-sm max-w-[250px] leading-relaxed">
-                            Experience the power of multilingual conversations with advanced Indian AI contextual awareness.
+                        <h2 className="text-4xl font-bold text-white mb-3 tracking-tight">Sensiq AI</h2>
+                        <p className="text-gray-400 text-base max-w-[280px] leading-relaxed">
+                            Smarter Conversations. Every Language.
                         </p>
                     </div>
                 </div>
 
                 {/* Right Side: Form */}
-                <div className={`${isModal ? 'w-full md:w-1/2' : 'w-full'} flex flex-col justify-center p-10 md:p-16 relative bg-[#1a1a1a]`}>
+                <div className={`${isModal ? 'w-full md:w-1/2' : 'w-full'} flex flex-col justify-center p-8 sm:p-12 md:p-16 relative bg-[#1a1a1a]`}>
 
-                    <div className="mb-8 md:text-left">
+                    <div className="mb-10 text-center md:text-left">
                         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
                             Welcome
                         </h1>
                         <p className="text-gray-500 text-sm">
-                            Unlock the full potential of Sarvam AI.
+                            Unlock the full potential of Sensiq AI.
                         </p>
                     </div>
 
                     {/* Features List */}
-                    <div className="space-y-4 mb-8">
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
+                    <div className="space-y-5 mb-10 pl-2">
+                        <div className="flex items-center gap-4 text-sm text-gray-300">
                             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                                 <Check size={16} className="text-emerald-500" />
                             </div>
                             <span>Unlimited multilingual conversations</span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
+                        <div className="flex items-center gap-4 text-sm text-gray-300">
                             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                                 <Check size={16} className="text-emerald-500" />
                             </div>
                             <span>Voice interaction in 10+ languages</span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
+                        <div className="flex items-center gap-4 text-sm text-gray-300">
                             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                                 <Check size={16} className="text-emerald-500" />
                             </div>
@@ -100,7 +100,7 @@ const Login = ({ onClose, isModal = false }) => {
                         Continue with Google
                     </button>
 
-                    <p className="text-xs text-gray-600 text-center mt-8">
+                    <p className="text-xs text-gray-600 text-center mt-10">
                         By continuing, you verify that you are you.
                     </p>
                 </div>
