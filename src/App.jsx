@@ -6,10 +6,6 @@ import Login from './components/Login';
 const AppContent = () => {
   const { currentUser } = useAuth();
 
-  if (!currentUser) {
-    return <Login />;
-  }
-
   return (
     <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#212121] text-white">Loading...</div>}>
       <ChatWindow />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bot, Mail, Lock, Chrome, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 
-const Login = () => {
+const Login = ({ onClose, isModal = false }) => {
     const { loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
@@ -21,6 +21,7 @@ const Login = () => {
             } else {
                 await signupWithEmail(email, password);
             }
+            if (onClose) onClose();
         } catch (err) {
             let msg = err.message.replace('Firebase: ', '');
             if (msg.includes('auth/operation-not-allowed')) {
@@ -36,14 +37,28 @@ const Login = () => {
         setError('');
         try {
             await loginWithGoogle();
+            if (onClose) onClose();
         } catch (err) {
             setError(err.message.replace('Firebase: ', ''));
         }
     };
 
+    const containerClasses = isModal
+        ? "relative w-full max-w-md bg-[#2f2f2f] rounded-3xl p-6 shadow-2xl animate-scale-in"
+        : "w-full max-w-md animate-fade-in";
+
     return (
-        <div className="min-h-screen bg-[#212121] flex items-center justify-center p-4">
-            <div className="w-full max-w-md animate-fade-in">
+        <div className={isModal ? "fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" : "min-h-screen bg-[#212121] flex items-center justify-center p-4"}>
+            <div className={containerClasses}>
+                {isModal && (
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    >
+                        ✕
+                    </button>
+                )}
+
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 shadow-2xl shadow-emerald-900/10 ring-1 ring-white/10">
@@ -59,8 +74,8 @@ const Login = () => {
                     </p>
                 </div>
 
-                {/* Card */}
-                <div className="bg-[#2f2f2f] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                {/* Card Content - Removed outer card div if isModal to avoid double padding */}
+                <div className={isModal ? "" : "bg-[#2f2f2f] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl"}>
 
                     {/* Error Message */}
                     {error && (

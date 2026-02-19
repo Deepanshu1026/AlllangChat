@@ -7,6 +7,7 @@ import LanguageSelector, { languages } from './LanguageSelector';
 import Sidebar from './Sidebar';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import Login from './Login';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
@@ -24,6 +25,8 @@ const ChatWindow = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const searchCountRef = useRef(0);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
@@ -148,7 +151,7 @@ const ChatWindow = () => {
     const handleNewChat = async () => {
         const newConv = {
             id: crypto.randomUUID(),
-            user_id: currentUser.uid,
+            user_id: currentUser?.uid || 'guest',
             title: 'New Chat',
             messages: [],
             created_at: new Date().toISOString(),
@@ -160,11 +163,13 @@ const ChatWindow = () => {
         setCurrentConversationId(newConv.id);
         setMessages([]);
 
-        const { error } = await supabase
-            .from('conversations')
-            .insert([newConv]);
+        if (currentUser) {
+            const { error } = await supabase
+                .from('conversations')
+                .insert([newConv]);
 
-        if (error) console.error('Error creating chat:', error);
+            if (error) console.error('Error creating chat:', error);
+        }
     };
 
     const handleSelectConversation = (id) => {
@@ -179,12 +184,14 @@ const ChatWindow = () => {
             setMessages([]);
         }
 
-        const { error } = await supabase
-            .from('conversations')
-            .delete()
-            .eq('id', id);
+        if (currentUser) {
+            const { error } = await supabase
+                .from('conversations')
+                .delete()
+                .eq('id', id);
 
-        if (error) console.error('Error deleting chat:', error);
+            if (error) console.error('Error deleting chat:', error);
+        }
     };
 
     const updateConversationTitle = async (convId, firstMessage) => {
@@ -197,12 +204,14 @@ const ChatWindow = () => {
             return conv;
         }));
 
-        const { error } = await supabase
-            .from('conversations')
-            .update({ title: newTitle })
-            .eq('id', convId);
+        if (currentUser) {
+            const { error } = await supabase
+                .from('conversations')
+                .update({ title: newTitle })
+                .eq('id', convId);
 
-        if (error) console.error('Error updating title:', error);
+            if (error) console.error('Error updating title:', error);
+        }
     };
 
     const updateConversationMessages = async (convId, newMessages) => {
@@ -213,15 +222,17 @@ const ChatWindow = () => {
             return conv;
         }));
 
-        const { error } = await supabase
-            .from('conversations')
-            .update({
-                messages: newMessages,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', convId);
+        if (currentUser) {
+            const { error } = await supabase
+                .from('conversations')
+                .update({
+                    messages: newMessages,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', convId);
 
-        if (error) console.error('Error updating messages:', error);
+            if (error) console.error('Error updating messages:', error);
+        }
     };
 
     const handleSuggestionClick = (text) => {
@@ -234,6 +245,15 @@ const ChatWindow = () => {
 
     const handleSend = async () => {
         if (!inputText.trim()) return;
+
+        // Guest logic: Allow 1st search, then prompt login
+        if (!currentUser) {
+            if (searchCountRef.current >= 1) {
+                setShowLoginModal(true);
+                return;
+            }
+            searchCountRef.current += 1;
+        }
 
         let convId = currentConversationId;
         if (!convId) {
@@ -427,7 +447,17 @@ const ChatWindow = () => {
                                 Sarvam <span className="text-emerald-500">2B</span>
                             </h1>
                         </div>
-                        <LanguageSelector />
+                        <div className="flex items-center gap-3">
+                            {!currentUser && (
+                                <button
+                                    onClick={() => setShowLoginModal(true)}
+                                    className="px-4 py-2 bg-white text-black text-sm font-medium rounded-full hover:bg-gray-200 transition-colors"
+                                >
+                                    Log in
+                                </button>
+                            )}
+                            <LanguageSelector />
+                        </div>
                     </div>
                 </header>
 
@@ -670,6 +700,12 @@ const ChatWindow = () => {
                     }
                 `}</style>
             </div>
+            {showLoginModal && (
+                <Login
+                    isModal
+                    onClose={() => setShowLoginModal(false)}
+                />
+            )}
         </div>
     );
 };
