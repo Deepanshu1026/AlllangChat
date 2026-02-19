@@ -149,6 +149,11 @@ const ChatWindow = () => {
     }, [currentConversationId]);
 
     const handleNewChat = async () => {
+        // Prevent multiple empty new chats
+        if (messages.length === 0 && conversations.length > 0 && conversations[0].messages.length === 0) {
+            return;
+        }
+
         const newConv = {
             id: crypto.randomUUID(),
             user_id: currentUser?.uid || 'guest',
