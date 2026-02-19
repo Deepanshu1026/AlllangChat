@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -26,11 +26,13 @@ const ChatWindow = () => {
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const searchCountRef = useRef(0);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const recognitionRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Initialize Speech Recognition
     useEffect(() => {
@@ -248,8 +250,52 @@ const ChatWindow = () => {
         navigator.clipboard.writeText(text);
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert("Please select an image file.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 800;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG with 0.7 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    setSelectedImage(dataUrl);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSend = async () => {
-        if (!inputText.trim()) return;
+        if (!inputText.trim() && !selectedImage) return;
 
         // Guest logic: Allow 1st search, then prompt login
         if (!currentUser) {
@@ -276,6 +322,7 @@ const ChatWindow = () => {
         const newMessage = {
             id: Date.now(),
             text: inputText,
+            image: selectedImage, // Store image in message
             isKey: false,
             sender: 'user',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -286,17 +333,32 @@ const ChatWindow = () => {
         updateConversationMessages(convId, updatedMessages);
 
         if (messages.length === 0) {
-            updateConversationTitle(convId, inputText);
+            updateConversationTitle(convId, inputText || "Image Message");
         }
 
         setInputText('');
+        setSelectedImage(null); // Clear image after sending
         setIsTyping(true);
 
         try {
-            const history = updatedMessages.map(msg => ({
-                role: msg.sender === 'user' ? 'user' : 'assistant',
-                content: msg.isKey ? t(msg.text) : msg.text
-            }));
+            const history = updatedMessages.map(msg => {
+                if (msg.image) {
+                    const content = [];
+                    if (msg.text) {
+                        content.push({ type: "text", text: msg.isKey ? t(msg.text) : msg.text });
+                    }
+                    content.push({ type: "image_url", image_url: { url: msg.image } });
+                    return {
+                        role: msg.sender === 'user' ? 'user' : 'assistant',
+                        content: content
+                    };
+                } else {
+                    return {
+                        role: msg.sender === 'user' ? 'user' : 'assistant',
+                        content: msg.isKey ? t(msg.text) : msg.text
+                    };
+                }
+            });
 
             let apiMessages = history.slice(-10);
             while (apiMessages.length > 0 && apiMessages[0].role !== 'user') {
@@ -315,11 +377,16 @@ const ChatWindow = () => {
                     'Authorization': `Bearer ${API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "sarvam-m",
+                    model: selectedImage ? "gpt-4o" : "sarvam-m", // Switch to vision-capable model if image present
                     messages: [
                         {
                             role: "system",
-                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity. IMPORTANT: If providing code, provide the FULL and COMPLETE code without placeholders or truncation.`
+                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity. IMPORTANT: If providing code, provide the FULL and COMPLETE code without placeholders or truncation.
+
+At the very end of your response, provide 3 short, relevant follow-up questions in a JSON block like this:
+\`\`\`json
+{ "related": ["Question 1", "Question 2", "Question 3"] }
+\`\`\``
                         },
                         ...apiMessages
                     ],
@@ -331,8 +398,34 @@ const ChatWindow = () => {
             const data = await response.json();
 
             let botText = "Sorry, I couldn't process that.";
+            let suggestionsWrapper = [];
+
             if (data.choices && data.choices[0] && data.choices[0].message) {
-                botText = data.choices[0].message.content;
+                let fullContent = data.choices[0].message.content;
+
+                // improved regex to find JSON block at the end
+                const jsonBlockRegex = /```json\s*(\{[\s\S]*?"related"[\s\S]*?\})\s*```/;
+                const jsonMatch = fullContent.match(jsonBlockRegex);
+
+                if (jsonMatch) {
+                    try {
+                        const parsed = JSON.parse(jsonMatch[1]);
+                        if (parsed.related && Array.isArray(parsed.related)) {
+                            suggestionsWrapper = parsed.related;
+                            // Remove the JSON block from the displayed text
+                            fullContent = fullContent.replace(jsonMatch[0], '').trim();
+                        }
+                    } catch (e) {
+                        console.error("Error parsing related suggestions:", e);
+                    }
+                }
+
+                // Fallback if no suggestions found
+                if (suggestionsWrapper.length === 0) {
+                    suggestionsWrapper = ["Tell me more", "Explain in detail", "Give examples"];
+                }
+
+                botText = fullContent;
             } else if (data.error) {
                 console.error("API Error:", data.error);
                 botText = "Error: " + (data.error.message || "Unknown error");
@@ -343,6 +436,7 @@ const ChatWindow = () => {
                 text: botText,
                 isKey: false,
                 sender: 'assistant',
+                suggestions: suggestionsWrapper,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
@@ -354,7 +448,7 @@ const ChatWindow = () => {
             console.error("Request Error:", error);
             const errorMessage = {
                 id: Date.now() + 1,
-                text: "Network error connecting to Sensiq AI. Please check your internet connection.",
+                text: `Connection error: ${error.message}. Please check your internet or try a smaller image.`,
                 isKey: false,
                 sender: 'assistant',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -383,45 +477,81 @@ const ChatWindow = () => {
 
     const InputArea = (
         <div className="max-w-3xl mx-auto w-full">
-            <div className={`relative flex items-end w-full p-3 bg-[#2f2f2f] border rounded-2xl shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-gray-600/30 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-gray-500/50'}`}>
-                <textarea
-                    ref={textareaRef}
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder={isListening ? "Listening..." : "Message Sensiq AI..."}
-                    rows={1}
-                    className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 pr-20 pl-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
-                    style={{ overflowY: 'auto' }}
-                />
+            <div className={`relative flex flex-col w-full bg-[#2f2f2f] border rounded-2xl shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-gray-600/30 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-gray-500/50'}`}>
 
-                <div className="absolute right-3 bottom-3 flex items-center gap-2">
-                    {/* Mic Button */}
+                {/* Image Preview Area */}
+                {selectedImage && (
+                    <div className="px-3 pt-3 pb-1">
+                        <div className="relative inline-block">
+                            <img src={selectedImage} alt="Preview" className="h-16 w-auto rounded-lg border border-white/10 shadow-lg" />
+                            <button
+                                onClick={() => setSelectedImage(null)}
+                                className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-0.5 hover:bg-black border border-white/20 transition-colors"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex items-end w-full p-3">
+                    {/* File Input (Hidden) */}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleImageSelect}
+                        className="hidden"
+                    />
+
+                    {/* Paperclip Button */}
                     <button
-                        onClick={toggleListening}
-                        className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${isListening
-                            ? 'bg-red-500/10 text-red-500 animate-pulse'
-                            : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                        title="Voice Input"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-1.5 mr-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        title="Upload Image"
                     >
-                        {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                        <ImageIcon size={20} />
                     </button>
 
-                    {/* Send Button */}
-                    <button
-                        onClick={handleSend}
-                        disabled={!inputText.trim() || isTyping}
-                        className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${inputText.trim() && !isTyping
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
-                            : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
-                            }`}
-                    >
-                        {isTyping ? (
-                            <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
-                        ) : (
-                            <ArrowUp size={20} strokeWidth={2.5} />
-                        )}
-                    </button>
+                    <textarea
+                        ref={textareaRef}
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        placeholder={isListening ? "Listening..." : "Message Sensiq AI..."}
+                        rows={1}
+                        className="w-full max-h-[200px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-400 focus:ring-0 outline-none resize-none py-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-[15px]"
+                        style={{ overflowY: 'auto' }}
+                    />
+
+                    <div className="flex items-center gap-2 pl-2">
+                        {/* Mic Button */}
+                        <button
+                            onClick={toggleListening}
+                            className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${isListening
+                                ? 'bg-red-500/10 text-red-500 animate-pulse'
+                                : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                            title="Voice Input"
+                        >
+                            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                        </button>
+
+                        {/* Send Button */}
+                        <button
+                            onClick={handleSend}
+                            disabled={(!inputText.trim() && !selectedImage) || isTyping}
+                            className={`p-1.5 rounded-lg transition-all duration-300 ease-out active:scale-90 ${(inputText.trim() || selectedImage) && !isTyping
+                                ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 scale-100'
+                                : 'bg-transparent text-gray-500 cursor-not-allowed scale-95'
+                                }`}
+                        >
+                            {isTyping ? (
+                                <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
+                            ) : (
+                                <ArrowUp size={20} strokeWidth={2.5} />
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
             <div className="text-center mt-3 animate-fade-in">
@@ -610,6 +740,11 @@ const ChatWindow = () => {
                                             )}
 
                                             <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400">
+                                                {msg.image && (
+                                                    <div className="mb-3">
+                                                        <img src={msg.image} alt="Uploaded content" className="max-h-[300px] max-w-full rounded-xl border border-white/10 bg-black/20" />
+                                                    </div>
+                                                )}
                                                 {msg.isKey ? (
                                                     <p>{t(msg.text)}</p>
                                                 ) : (
@@ -651,6 +786,29 @@ const ChatWindow = () => {
                                                     />
                                                 )}
                                             </div>
+
+                                            {/* Social / Related Suggestions (Perplexity style) */}
+                                            {msg.sender === 'assistant' && !msg.isKey && msg.suggestions && msg.suggestions.length > 0 && (
+                                                <div className="mt-4 flex flex-wrap gap-2 animate-fade-in">
+                                                    <div className="w-full text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-2">
+                                                        <Sparkles size={12} className="text-emerald-500" />
+                                                        <span>Related</span>
+                                                    </div>
+                                                    {/* Render dynamic suggestions if available, otherwise show nothing or fallback (optional) */}
+                                                    {(msg.suggestions && msg.suggestions.length > 0 ? msg.suggestions : []).map((suggestion, sIdx) => (
+                                                        <button
+                                                            key={sIdx}
+                                                            onClick={() => {
+                                                                setInputText(suggestion);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] border border-white/5 rounded-full text-xs text-gray-300 hover:text-white transition-all active:scale-95 flex items-center gap-1.5"
+                                                        >
+                                                            <span>{suggestion}</span>
+                                                            <ArrowUp size={12} className="rotate-45 text-gray-500" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
