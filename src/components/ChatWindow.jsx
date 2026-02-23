@@ -311,15 +311,27 @@ const ChatWindow = () => {
 
         let convId = currentConversationId;
         if (!convId) {
+            convId = crypto.randomUUID();
             const newConv = {
-                id: crypto.randomUUID(),
+                id: convId,
+                user_id: currentUser?.uid || 'guest',
                 title: 'New Chat',
                 messages: [],
-                createdAt: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             };
+
+            // UI Optimistic Update
             setConversations(prev => [newConv, ...prev]);
-            convId = newConv.id;
             setCurrentConversationId(convId);
+
+            // Sync new conversation to Supabase
+            if (currentUser) {
+                const { error } = await supabase
+                    .from('conversations')
+                    .insert([newConv]);
+                if (error) console.error('Error creating chat in Supabase:', error);
+            }
         }
 
         const newMessage = {
