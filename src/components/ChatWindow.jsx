@@ -652,7 +652,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
                         <div className="flex items-center gap-2 cursor-pointer group" onClick={handleNewChat}>
                             <img src={logo} alt="Sensiq Logo" className="h-6 w-auto object-contain" />
-                            <span className="text-lg font-bold text-gray-200">Sensiq</span>
+                            <span className="text-lg font-bold text-gray-200 hidden sm:block">Sensiq</span>
                         </div>
                         <div className="flex items-center gap-3">
                             {!currentUser && (
@@ -685,15 +685,9 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             </div>
 
                             {/* Welcome Text */}
-                            <h2 className="text-2xl md:text-4xl font-semibold text-white mb-2 text-center tracking-tight animate-slide-up z-10" style={{ animationDelay: '0.1s' }}>
-                                Good to See You!
+                            <h2 className="text-2xl md:text-3xl font-medium text-white mb-2 text-center tracking-tight animate-slide-up z-10 px-4" style={{ animationDelay: '0.1s' }}>
+                                Good to see you, <span className="capitalize">{currentUser?.displayName || currentUser?.email?.split('@')[0] || "there"}</span>.
                             </h2>
-                            <h3 className="text-xl md:text-3xl font-light text-gray-400 mb-4 text-center animate-slide-up z-10" style={{ animationDelay: '0.2s' }}>
-                                How Can I be an <span className="text-emerald-400 font-normal">Assistant?</span>
-                            </h3>
-                            <p className="text-gray-500 text-xs md:text-sm mb-8 md:mb-12 animate-slide-up z-10 text-center max-w-[80%]" style={{ animationDelay: '0.3s' }}>
-                                I'm available 24/7 for you, ask me anything.
-                            </p>
 
                             {/* Status Indicators */}
                             <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[10px] md:text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
