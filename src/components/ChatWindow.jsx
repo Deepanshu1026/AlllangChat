@@ -680,7 +680,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[60px] md:blur-[100px] pointer-events-none" />
 
                             {/* Logo */}
-                            <div className="w-20 h-20 md:w-24 md:h-24 mb-8 animate-slide-up relative z-10">
+                            <div className="w-20 h-20 md:w-24 md:h-24 mb-8 animate-float relative z-10 transition-transform duration-500 hover:scale-110">
                                 <img src={logo} alt="Logo" className="w-full h-full object-contain drop-shadow-2xl" />
                             </div>
 
@@ -690,12 +690,13 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             </h2>
 
                             {/* Status Indicators */}
-                            <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[10px] md:text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
-                                <div className="flex items-center gap-2">
+                            <div className="w-full max-w-2xl px-6 flex justify-between items-center text-[10px] md:text-[11px] text-gray-500 mb-4 opacity-0 animate-fade-in z-10 relative overflow-hidden rounded-xl py-1" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+                                <div className="absolute inset-0 shimmer opacity-30 pointer-events-none" />
+                                <div className="flex items-center gap-2 relative z-10">
                                     <Sparkles size={12} className="text-amber-400" />
                                     <span>Unlock more capabilities</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 relative z-10">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                     <span>Active extensions</span>
                                 </div>
@@ -792,7 +793,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                         <button
                                             key={idx}
                                             onClick={() => handleSuggestionClick(suggestion.text)}
-                                            className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-[11px] md:text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
+                                            className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-300 text-[11px] md:text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg animate-scale-in"
                                             style={{ animationDelay: `${0.5 + (idx * 0.1)}s` }}
                                         >
                                             <span className="text-emerald-500 group-hover:text-emerald-400 transition-colors">
@@ -812,7 +813,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             {messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`w-full text-gray-100 border-b border-black/5 dark:border-white/5 animate-fade-in ${msg.sender === 'assistant' ? 'bg-transparent' : 'bg-transparent'}`}
+                                    className={`w-full text-gray-100 border-b border-black/5 dark:border-white/5 animate-message ${msg.sender === 'assistant' ? 'bg-transparent' : 'bg-transparent'}`}
                                 >
                                     <div className={`max-w-3xl mx-auto flex gap-4 p-4 md:py-6 lg:px-0 m-auto ${msg.sender === 'user' ? 'justify-end' : ''}`}>
 
