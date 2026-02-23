@@ -9,6 +9,7 @@ import ModelSelector from './ModelSelector';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import Login from './Login';
+import logo from '../assets/img/sensiq.png';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
@@ -649,10 +650,9 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                 {/* ... (header) */}
                 <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300 pt-[--sat]">
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
-                        <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
-                            <h1 className="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors duration-200">
-                                Sensiq <span className="text-emerald-500">AI</span>
-                            </h1>
+                        <div className="flex items-center gap-2 cursor-pointer group" onClick={handleNewChat}>
+                            <img src={logo} alt="Sensiq Logo" className="h-6 w-auto object-contain" />
+                            <span className="text-lg font-bold text-gray-200">Sensiq</span>
                         </div>
                         <div className="flex items-center gap-3">
                             {!currentUser && (
@@ -680,8 +680,8 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[60px] md:blur-[100px] pointer-events-none" />
 
                             {/* Logo */}
-                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-gray-800 to-black rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-2xl ring-1 ring-white/10 animate-slide-up relative z-10">
-                                <Bot size={40} className="text-white drop-shadow-lg" />
+                            <div className="w-20 h-20 md:w-24 md:h-24 mb-8 animate-slide-up relative z-10">
+                                <img src={logo} alt="Logo" className="w-full h-full object-contain drop-shadow-2xl" />
                             </div>
 
                             {/* Welcome Text */}
@@ -835,7 +835,8 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                         <div className={`relative overflow-hidden ${msg.sender === 'user' ? 'bg-[#2f2f2f] rounded-2xl px-5 py-3 max-w-[85%]' : 'flex-1'}`}>
                                             {msg.sender === 'assistant' && (
                                                 <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
-                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold">Sensiq AI</span>
+                                                    <img src={logo} alt="Sensiq" className="w-4 h-4 object-contain" />
+                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400 font-bold text-xs">Sensiq AI</span>
                                                 </div>
                                             )}
 
