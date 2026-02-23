@@ -27,26 +27,28 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
         <>
             {/* Floating Toggle Button (Visible when Sidebar is closed) */}
             <div
-                className={`fixed top-3 left-3 z-50 transition-all duration-300 ease-in-out ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'
+                className={`fixed left-3 z-50 transition-all duration-300 ease-in-out ${!isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'
                     }`}
+                style={{ top: 'calc(var(--sat) + 0.75rem)' }}
             >
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="p-2.5 rounded-lg bg-[#212121] hover:bg-[#2f2f2f] text-gray-300 hover:text-white border border-white/5 shadow-xl transition-all active:scale-95 group"
+                    className="p-2.5 rounded-xl bg-[#212121] active:bg-[#2f2f2f] text-gray-300 active:text-white border border-white/5 shadow-2xl transition-all active:scale-90 group"
                     aria-label="Open sidebar"
                 >
-                    <PanelLeft size={20} className="group-hover:text-emerald-400 transition-colors" />
+                    <PanelLeft size={20} className="group-active:text-emerald-400 transition-colors" />
                 </button>
             </div>
 
             {/* Sidebar Container */}
             <aside
                 className={`
-                    h-screen bg-[#171717] flex flex-col border-r border-white/5 flex-shrink-0 
+                    h-[100svh] bg-[#171717] flex flex-col border-r border-white/5 flex-shrink-0 
                     transition-[width,opacity,transform] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]
                     ${isOpen ? 'w-[260px] opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-10 overflow-hidden'}
-                    ${isMobile && isOpen ? 'fixed inset-y-0 left-0 z-40 w-[280px] shadow-2xl' : 'relative'}
+                    ${isMobile && isOpen ? 'fixed inset-y-0 left-0 z-[60] w-[85%] max-w-[300px] shadow-2xl' : 'relative'}
                 `}
+                style={{ paddingTop: 'var(--sat)', paddingBottom: 'var(--sab)' }}
             >
                 {/* Header Section */}
                 <div className={`p-3 pb-0 opacity-100 transition-opacity duration-300 delay-100 ${!isOpen && 'opacity-0'}`}>
@@ -157,7 +159,7 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
             {/* Mobile Overlay */}
             {isMobile && isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 animate-fade-in"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-fade-in"
                     onClick={() => setIsOpen(false)}
                 />
             )}

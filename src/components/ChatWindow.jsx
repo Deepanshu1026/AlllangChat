@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import LanguageSelector, { languages } from './LanguageSelector';
 import Sidebar from './Sidebar';
+import ModelSelector from './ModelSelector';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import Login from './Login';
@@ -27,6 +28,7 @@ const ChatWindow = () => {
     const [isListening, setIsListening] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedModel, setSelectedModel] = useState('sarvam-m');
     const searchCountRef = useRef(0);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -416,7 +418,7 @@ const ChatWindow = () => {
                     'Authorization': `Bearer ${API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: selectedImage ? "gpt-4o" : "sarvam-m", // Switch to vision-capable model if image present
+                    model: selectedModel, // Use the user-selected Sarvam model
                     messages: [
                         {
                             role: "system",
@@ -467,7 +469,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                 botText = fullContent;
             } else if (data.error) {
                 console.error("API Error:", data.error);
-                botText = "Error: " + (data.error.message || "Unknown error");
+                botText = (data.error.message || "Unknown error");
             }
 
             const botMessage = {
@@ -537,7 +539,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                     </div>
                 )}
 
-                <div className="flex items-end w-full p-3">
+                <div className="flex items-end w-full p-2 md:p-3">
                     {/* File Input (Hidden) */}
                     <input
                         type="file"
@@ -547,14 +549,12 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                         className="hidden"
                     />
 
-                    {/* Paperclip Button */}
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-1.5 mr-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                        title="Upload Image"
-                    >
-                        <ImageIcon size={20} />
-                    </button>
+                    {/* Model Selector - Opens UP in floating input to stay visible */}
+                    <ModelSelector
+                        selectedModel={selectedModel}
+                        onModelChange={setSelectedModel}
+                        position="top"
+                    />
 
                     <textarea
                         ref={textareaRef}
@@ -598,7 +598,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
 
                     {/* Search Suggestion Dropdown (Floating Input) */}
                     {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
-                        <div className="absolute bottom-full left-0 right-0 mb-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
+                        <div className="absolute bottom-full left-0 right-0 mb-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
                             <div className="py-2">
                                 <div className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-1">
                                     Suggestions
@@ -625,8 +625,9 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                     )}
                 </div>
             </div>
-            <div className="text-center mt-3 animate-fade-in">
-                <p className="text-[11px] text-gray-500">
+            {/* Footer Disclaimer */}
+            <div className="px-4 pb-[calc(var(--sab)+0.5rem)] pt-2 bg-[#212121]">
+                <p className="text-[10px] md:text-[11px] text-gray-500 font-light text-center">
                     Sensiq AI can make mistakes. Check important info.
                 </p>
             </div>
@@ -634,7 +635,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
     );
 
     return (
-        <div className="flex h-screen bg-[#212121] overflow-hidden font-sans text-gray-100">
+        <div className="flex h-[100svh] bg-[#212121] overflow-hidden font-sans text-gray-100 selection:bg-emerald-500/30">
             <Sidebar
                 conversations={conversations}
                 currentConversation={currentConversationId}
@@ -646,7 +647,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0 relative">
                 {/* ... (header) */}
-                <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300">
+                <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300 pt-[--sat]">
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleNewChat}>
                             <h1 className="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors duration-200">
@@ -710,12 +711,12 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             <div className="w-full max-w-2xl px-4 relative z-20 animate-slide-up" style={{ animationDelay: '0.4s' }}>
                                 <div className={`relative flex items-center w-full p-1.5 md:p-2 bg-[#1a1a1a] border rounded-3xl md:rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
 
-                                    {/* Plus Button */}
-                                    <button className="hidden md:block p-3 mx-1 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors">
-                                        <div className="w-5 h-5 flex items-center justify-center border border-current rounded-md overflow-hidden">
-                                            <span className="text-lg leading-none mb-0.5">+</span>
-                                        </div>
-                                    </button>
+                                    {/* Model Selector - Opens DOWN in home screen search */}
+                                    <ModelSelector
+                                        selectedModel={selectedModel}
+                                        onModelChange={setSelectedModel}
+                                        position="bottom"
+                                    />
 
                                     <div className="hidden md:block h-6 w-[1px] bg-white/10 mx-1" />
 
@@ -764,7 +765,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
 
                                     {/* Search Suggestion Dropdown */}
                                     {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
                                             <div className="py-2">
                                                 {suggestions
                                                     .filter(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase())
@@ -813,7 +814,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             )}
                         </div>
                     ) : (
-                        <div className="pb-32 pt-4">
+                        <div className="pb-40 pt-4">
                             {messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
@@ -838,7 +839,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                                 </div>
                                             )}
 
-                                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400">
+                                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400 chat-message-text">
                                                 {msg.image && (
                                                     <div className="mb-3">
                                                         <img src={msg.image} alt="Uploaded content" className="max-h-[300px] max-w-full rounded-xl border border-white/10 bg-black/20" />
@@ -939,7 +940,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                 {showScrollButton && (
                     <button
                         onClick={scrollToBottom}
-                        className="absolute bottom-24 right-6 z-30 p-2 bg-[#2f2f2f] border border-white/10 rounded-full text-gray-400 hover:text-white shadow-xl hover:bg-[#3a3a3a] transition-all animate-bounce-in"
+                        className="fixed bottom-[calc(var(--sab)+100px)] right-4 md:right-8 z-30 p-2.5 bg-[#2f2f2f] border border-white/10 rounded-full text-gray-400 hover:text-white shadow-2xl hover:bg-[#3a3a3a] transition-all"
                         aria-label="Scroll to bottom"
                     >
                         <ArrowUp size={20} />
