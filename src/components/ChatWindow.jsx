@@ -244,6 +244,9 @@ const ChatWindow = () => {
 
     const handleSuggestionClick = (text) => {
         setInputText(text);
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+        }
     };
 
     const handleCopyMessage = (text) => {
@@ -469,10 +472,14 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
     };
 
     const suggestions = [
-        { icon: <Sparkles size={16} />, text: "Draft a tweet about AI" },
-        { icon: <Bot size={16} />, text: "Explain quantum computing" },
-        { icon: <User size={16} />, text: "Write a poem about rain" },
-        { icon: <Sparkles size={16} />, text: "Give me study tips" }
+        { icon: <Sparkles size={16} />, text: "Plan a trip to Goa" },
+        { icon: <Bot size={16} />, text: "Explain React hooks" },
+        { icon: <User size={16} />, text: "Write a letter in Hindi" },
+        { icon: <Sparkles size={16} />, text: "Recipe for Paneer Tikka" },
+        { icon: <Bot size={16} />, text: "Summarize this article" },
+        { icon: <Sparkles size={16} />, text: "Tell me a joke" },
+        { icon: <User size={16} />, text: "Give me workout tips" },
+        { icon: <Bot size={16} />, text: "Draft an email to my boss" }
     ];
 
     const InputArea = (
@@ -552,6 +559,34 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             )}
                         </button>
                     </div>
+
+                    {/* Search Suggestion Dropdown (Floating Input) */}
+                    {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
+                        <div className="absolute bottom-full left-0 right-0 mb-3 bg-[#2f2f2f] border border-gray-600/30 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
+                            <div className="py-2">
+                                <div className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-1">
+                                    Suggestions
+                                </div>
+                                {suggestions
+                                    .filter(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase())
+                                    .slice(0, 5)
+                                    .map((suggestion, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleSuggestionClick(suggestion.text)}
+                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors group"
+                                        >
+                                            <span className="text-gray-500 group-hover:text-emerald-400 transition-colors">
+                                                {suggestion.icon}
+                                            </span>
+                                            <span className="text-sm text-gray-300 group-hover:text-white truncate">
+                                                {suggestion.text}
+                                            </span>
+                                        </button>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="text-center mt-3 animate-fade-in">
@@ -690,28 +725,56 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                             <ArrowUp size={18} strokeWidth={3} />
                                         </button>
                                     </div>
+
+                                    {/* Search Suggestion Dropdown */}
+                                    {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                                            <div className="py-2">
+                                                {suggestions
+                                                    .filter(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase())
+                                                    .slice(0, 5)
+                                                    .map((suggestion, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => handleSuggestionClick(suggestion.text)}
+                                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors group"
+                                                        >
+                                                            <span className="text-gray-500 group-hover:text-emerald-400 transition-colors">
+                                                                {suggestion.icon}
+                                                            </span>
+                                                            <span className="text-sm text-gray-300 group-hover:text-white truncate">
+                                                                {suggestion.text}
+                                                            </span>
+                                                            <Sparkles size={12} className="ml-auto text-emerald-500/0 group-hover:text-emerald-500/50 transition-all scale-0 group-hover:scale-100" />
+                                                        </button>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Suggestions */}
-                            <div className="flex flex-wrap justify-center gap-2 md:gap-3 w-full max-w-3xl px-4 mt-6 md:mt-8 animate-slide-up z-10" style={{ animationDelay: '0.5s' }}>
-                                {suggestions.map((suggestion, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleSuggestionClick(suggestion.text)}
-                                        className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-[11px] md:text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
-                                        style={{ animationDelay: `${0.5 + (idx * 0.1)}s` }}
-                                    >
-                                        <span className="text-emerald-500 group-hover:text-emerald-400 transition-colors">
-                                            {suggestion.icon}
-                                        </span>
-                                        <span className="truncate max-w-[100px] md:max-w-[150px]">{suggestion.text}</span>
+                            {/* Suggestions - Static Chips below for empty state */}
+                            {!inputText && (
+                                <div className="flex flex-wrap justify-center gap-2 md:gap-3 w-full max-w-3xl px-4 mt-6 md:mt-8 animate-slide-up z-10" style={{ animationDelay: '0.5s' }}>
+                                    {suggestions.map((suggestion, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => handleSuggestionClick(suggestion.text)}
+                                            className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] hover:border-white/10 transition-all duration-200 text-[11px] md:text-xs text-gray-400 hover:text-white group active:scale-[0.98] shadow-lg"
+                                            style={{ animationDelay: `${0.5 + (idx * 0.1)}s` }}
+                                        >
+                                            <span className="text-emerald-500 group-hover:text-emerald-400 transition-colors">
+                                                {suggestion.icon}
+                                            </span>
+                                            <span className="truncate max-w-[100px] md:max-w-[150px]">{suggestion.text}</span>
+                                        </button>
+                                    ))}
+                                    <button className="px-3 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-all">
+                                        <span className="text-xs tracking-widest">•••</span>
                                     </button>
-                                ))}
-                                <button className="px-3 py-2.5 rounded-full border border-white/5 bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white transition-all">
-                                    <span className="text-xs tracking-widest">•••</span>
-                                </button>
-                            </div>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="pb-32 pt-4">
