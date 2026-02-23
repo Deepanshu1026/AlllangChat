@@ -85,12 +85,17 @@ const ChatWindow = () => {
     };
 
     // Fetch conversations from Supabase
+    // Fetch conversations and handle guest sync
     useEffect(() => {
-        const fetchConversations = async () => {
-            if (!currentUser) return;
+        const syncAndFetch = async () => {
+            if (!currentUser) {
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
 
-            // Sync user to Supabase users table (idempotent upsert)
+            // 1. Sync user to Supabase
             const { error: userError } = await supabase
                 .from('users')
                 .upsert({
@@ -100,6 +105,24 @@ const ChatWindow = () => {
 
             if (userError) console.error('Error syncing user:', userError);
 
+            // 2. Identify and sync guest conversations
+            const guestChats = conversations.filter(c => c.user_id === 'guest');
+            if (guestChats.length > 0) {
+                const syncedChats = guestChats.map(chat => ({
+                    ...chat,
+                    user_id: currentUser.uid,
+                    updated_at: new Date().toISOString()
+                }));
+
+                // Update Supabase with formerly guest chats
+                const { error: syncError } = await supabase
+                    .from('conversations')
+                    .upsert(syncedChats);
+
+                if (syncError) console.error('Error syncing guest chats to account:', syncError);
+            }
+
+            // 3. Fetch all conversations for this user
             const { data, error } = await supabase
                 .from('conversations')
                 .select('*')
@@ -109,12 +132,13 @@ const ChatWindow = () => {
             if (error) {
                 console.error('Error fetching conversations:', error);
             } else {
+                // If we have guest chats that were just synced, they'll be in 'data' now
                 setConversations(data || []);
             }
             setLoading(false);
         };
 
-        fetchConversations();
+        syncAndFetch();
     }, [currentUser]);
 
     useEffect(() => {
