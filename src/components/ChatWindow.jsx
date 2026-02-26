@@ -717,24 +717,24 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                         </div>
                         <div className="flex items-center gap-3">
                             {currentUser && userData && (
-                                <div className="hidden md:flex items-center gap-3 mr-2">
+                                <div className="flex items-center gap-2 md:gap-3 mr-1 md:mr-2">
                                     {userData.plan === 'free' ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="text-[10px] text-gray-500 font-medium bg-white/5 px-2 py-1 rounded-md">
-                                                {userData.usage_count || 0} / {userData.usage_limit || 10} queries
+                                        <div className="flex items-center gap-1.5 md:gap-2">
+                                            <div className="hidden sm:block text-[10px] text-gray-500 font-medium bg-white/5 px-2 py-1 rounded-md">
+                                                {userData.usage_count || 0}/{userData.usage_limit || 10}
                                             </div>
                                             <button
                                                 onClick={() => setShowPricingModal(true)}
-                                                className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
+                                                className="px-2 md:px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-[10px] md:text-xs font-bold rounded-lg transition-all flex items-center gap-1 border border-emerald-500/20 active:scale-95"
                                             >
-                                                <Rocket size={14} />
+                                                <Rocket size={12} className="md:w-3.5 md:h-3.5" />
                                                 Upgrade
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg">
-                                            <Sparkles size={14} className="text-amber-500" />
-                                            <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Pro Plan</span>
+                                        <div className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg animate-pulse-subtle">
+                                            <Sparkles size={12} className="text-amber-500 md:w-3.5 md:h-3.5" />
+                                            <span className="text-[9px] md:text-xs font-bold text-amber-500 uppercase tracking-widest">PRO</span>
                                         </div>
                                     )}
                                 </div>
