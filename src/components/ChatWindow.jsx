@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon, Rocket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -9,6 +9,7 @@ import ModelSelector from './ModelSelector';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import Login from './Login';
+import PricingModal from './PricingModal';
 import logo from '../assets/img/sensiq.png';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
@@ -28,8 +29,10 @@ const ChatWindow = () => {
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showPricingModal, setShowPricingModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedModel, setSelectedModel] = useState('sarvam-m');
+    const { userData, incrementUsage } = useAuth();
     const searchCountRef = useRef(0);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -327,6 +330,18 @@ const ChatWindow = () => {
     const handleSend = async () => {
         if (!inputText.trim() && !selectedImage) return;
 
+        // Subscription & Usage Logic
+        if (currentUser && userData) {
+            const isFree = userData.plan === 'free';
+            const usageCount = userData.usage_count || 0;
+            const limit = userData.usage_limit || 10;
+
+            if (isFree && usageCount >= limit) {
+                setShowPricingModal(true);
+                return;
+            }
+        }
+
         // Guest logic: Allow 1st search, then prompt login
         if (!currentUser) {
             if (searchCountRef.current >= 1) {
@@ -485,6 +500,11 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
             const finalMessages = [...updatedMessages, botMessage];
             setMessages(finalMessages);
             updateConversationMessages(convId, finalMessages);
+
+            // Increment usage count for logged in users
+            if (currentUser) {
+                await incrementUsage();
+            }
 
         } catch (error) {
             console.error("Request Error:", error);
@@ -655,6 +675,29 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                             <span className="text-lg font-bold text-gray-200 hidden sm:block">Sensiq</span>
                         </div>
                         <div className="flex items-center gap-3">
+                            {currentUser && userData && (
+                                <div className="hidden md:flex items-center gap-3 mr-2">
+                                    {userData.plan === 'free' ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-[10px] text-gray-500 font-medium bg-white/5 px-2 py-1 rounded-md">
+                                                {userData.usage_count || 0} / {userData.usage_limit || 10} queries
+                                            </div>
+                                            <button
+                                                onClick={() => setShowPricingModal(true)}
+                                                className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
+                                            >
+                                                <Rocket size={14} />
+                                                Upgrade
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg">
+                                            <Sparkles size={14} className="text-amber-500" />
+                                            <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Pro Plan</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {!currentUser && (
                                 <button
                                     onClick={() => setShowLoginModal(true)}
@@ -963,6 +1006,11 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                 <Login
                     isModal
                     onClose={() => setShowLoginModal(false)}
+                />
+            )}
+            {showPricingModal && (
+                <PricingModal
+                    onClose={() => setShowPricingModal(false)}
                 />
             )}
         </div>
