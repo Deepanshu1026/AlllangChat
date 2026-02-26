@@ -23,6 +23,9 @@ AlllangChat is a modern, high-performance AI chat application designed specifica
 - **💳 Subscription Model**:
   - **Free Plan**: 10 queries per day to explore capabilities.
   - **Pro Plan**: Unlimited queries, priority access, and premium support via **Razorpay** integration.
+- **🎙️ Vernacular Voice-to-Voice**:
+  - **"Call Mode"**: Converse naturally with Sensiq AI using high-accuracy Indian accents.
+  - **Audio Notes**: Record complex queries; Sensiq transcribes and translates them using Sarvam AI's **Saaras v3** and **Bulbul v3** models.
 - **⚡ High Performance**: Built with **Vite** for instant loading and hot module replacement.
 
 ---

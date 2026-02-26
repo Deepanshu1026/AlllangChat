@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon, Rocket } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon, Rocket, Phone, PhoneOff, Volume2, VolumeX, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import Login from './Login';
 import PricingModal from './PricingModal';
 import logo from '../assets/img/sensiq.png';
+import { speechToText, textToSpeech } from '../sarvamSpeech';
 
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
@@ -28,6 +29,8 @@ const ChatWindow = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [isCallMode, setIsCallMode] = useState(false);
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showPricingModal, setShowPricingModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
@@ -38,47 +41,79 @@ const ChatWindow = () => {
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const recognitionRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const audioPlayerRef = useRef(new Audio());
     const fileInputRef = useRef(null);
 
-    // Initialize Speech Recognition
-    useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.interimResults = false;
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
 
-            // Set language based on current i18n language or default to English
-            recognitionRef.current.lang = i18n.language || 'en-US';
-
-            recognitionRef.current.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                setInputText(prev => prev + (prev ? ' ' : '') + transcript);
-                setIsListening(false);
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
             };
 
-            recognitionRef.current.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                setIsListening(false);
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                setIsTyping(true);
+                try {
+                    const transcript = await speechToText(audioBlob, i18n.language || 'hi-IN');
+                    if (transcript) {
+                        setInputText(transcript);
+                        // Auto-send in call mode
+                        if (isCallMode) {
+                            setTimeout(() => handleSend(transcript), 500);
+                        }
+                    }
+                } catch (err) {
+                    console.error("STT Error:", err);
+                } finally {
+                    setIsTyping(false);
+                }
             };
 
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-            };
+            mediaRecorderRef.current.start();
+            setIsListening(true);
+        } catch (err) {
+            console.error("Error accessing mic:", err);
+            alert("Please allow microphone access.");
         }
-    }, [i18n.language]);
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isListening) {
+            mediaRecorderRef.current.stop();
+            setIsListening(false);
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+    };
 
     const toggleListening = () => {
-        if (!recognitionRef.current) {
-            alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
-            return;
-        }
-
         if (isListening) {
-            recognitionRef.current.stop();
+            stopRecording();
         } else {
-            recognitionRef.current.start();
-            setIsListening(true);
+            startRecording();
+        }
+    };
+
+    const playVoiceResponse = async (text) => {
+        if (!isCallMode) return;
+        try {
+            setIsPlayingAudio(true);
+            const audioData = await textToSpeech(text, i18n.language || 'hi-IN');
+            if (audioData) {
+                audioPlayerRef.current.src = audioData;
+                audioPlayerRef.current.play();
+                audioPlayerRef.current.onended = () => setIsPlayingAudio(false);
+            }
+        } catch (err) {
+            console.error("TTS Error:", err);
+            setIsPlayingAudio(false);
         }
     };
 
@@ -327,8 +362,9 @@ const ChatWindow = () => {
         }
     };
 
-    const handleSend = async () => {
-        if (!inputText.trim() && !selectedImage) return;
+    const handleSend = async (overrideText) => {
+        const textToSend = typeof overrideText === 'string' ? overrideText : inputText;
+        if (!textToSend.trim() && !selectedImage) return;
 
         // Subscription & Usage Logic
         if (currentUser && userData) {
@@ -378,7 +414,7 @@ const ChatWindow = () => {
 
         const newMessage = {
             id: Date.now(),
-            text: inputText,
+            text: textToSend,
             image: selectedImage, // Store image in message
             isKey: false,
             sender: 'user',
@@ -500,6 +536,11 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
             const finalMessages = [...updatedMessages, botMessage];
             setMessages(finalMessages);
             updateConversationMessages(convId, finalMessages);
+
+            // Trigger Voice Response if in Call Mode
+            if (isCallMode) {
+                playVoiceResponse(botText);
+            }
 
             // Increment usage count for logged in users
             if (currentUser) {
@@ -706,6 +747,31 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                     Log in
                                 </button>
                             )}
+                            <div className="flex items-center gap-2 mr-2">
+                                <button
+                                    onClick={() => {
+                                        if (isPlayingAudio) {
+                                            audioPlayerRef.current.pause();
+                                            setIsPlayingAudio(false);
+                                        }
+                                        setIsCallMode(!isCallMode);
+                                    }}
+                                    className={`p-2 rounded-full transition-all flex items-center gap-2 ${isCallMode ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                    title={isCallMode ? "Turn off Voice Mode" : "Turn on Voice Mode"}
+                                >
+                                    {isCallMode ? (
+                                        <>
+                                            {isPlayingAudio ? <Volume2 size={18} className="animate-pulse" /> : <Phone size={18} />}
+                                            <span className="text-xs font-bold hidden md:block">Call Mode</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <PhoneOff size={18} />
+                                            <span className="text-xs font-bold hidden md:block">Voice Mode</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                             <LanguageSelector />
                         </div>
                     </div>
@@ -870,7 +936,22 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                         )}
 
                                         {/* Message Content */}
-                                        <div className={`relative overflow-hidden ${msg.sender === 'user' ? 'bg-[#2f2f2f] rounded-2xl px-5 py-3 max-w-[85%]' : 'flex-1'}`}>
+                                        <div className={`relative group overflow-hidden ${msg.sender === 'user' ? 'bg-[#2f2f2f] rounded-2xl px-5 py-3 max-w-[85%]' : 'flex-1'}`}>
+                                            {/* Edit Button for User Messages */}
+                                            {msg.sender === 'user' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setInputText(msg.text);
+                                                        if (textareaRef.current) {
+                                                            textareaRef.current.focus();
+                                                        }
+                                                    }}
+                                                    className="absolute top-2 right-2 p-1.5 bg-black/40 hover:bg-black/60 rounded-lg text-gray-400 hover:text-white transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm border border-white/10"
+                                                    title="Edit message"
+                                                >
+                                                    <Pencil size={12} />
+                                                </button>
+                                            )}
                                             {msg.sender === 'assistant' && (
                                                 <div className="font-semibold text-sm mb-1 opacity-90 flex items-center gap-2">
                                                     <img src={logo} alt="Sensiq" className="w-4 h-4 object-contain" />
