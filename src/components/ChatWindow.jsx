@@ -34,6 +34,7 @@ const ChatWindow = () => {
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showPricingModal, setShowPricingModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
     const [selectedModel, setSelectedModel] = useState('sarvam-m');
     const { userData, incrementUsage } = useAuth();
     const searchCountRef = useRef(0);
@@ -325,6 +326,7 @@ const ChatWindow = () => {
                 alert("Please select an image file.");
                 return;
             }
+            setSelectedFile(file); // Keep the high-res file for OCR
 
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -437,16 +439,17 @@ const ChatWindow = () => {
         }
 
         setInputText('');
-        const imageToProcess = selectedImage; // Keep local ref for OCR
+        const fileToProcess = selectedFile; // Use the actual file for OCR
         setSelectedImage(null); // Clear image after sending
+        setSelectedFile(null); // Clear file after sending
         setIsTyping(true);
 
         try {
             // Perform background OCR if there is an image
             let extractedText = "";
-            if (imageToProcess) {
+            if (fileToProcess) {
                 try {
-                    const result = await Tesseract.recognize(imageToProcess, 'eng');
+                    const result = await Tesseract.recognize(fileToProcess, 'eng');
                     extractedText = result.data.text.trim();
                 } catch (error) {
                     console.error("Background OCR Error:", error);
@@ -606,7 +609,10 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                         <div className="relative inline-block">
                             <img src={selectedImage} alt="Preview" className="h-16 w-auto rounded-lg border border-white/10 shadow-lg" />
                             <button
-                                onClick={() => setSelectedImage(null)}
+                                onClick={() => {
+                                    setSelectedImage(null);
+                                    setSelectedFile(null);
+                                }}
                                 className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-0.5 hover:bg-black border border-white/20 transition-colors"
                             >
                                 <X size={12} />
@@ -846,7 +852,10 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                             <div className="relative inline-block">
                                                 <img src={selectedImage} alt="Preview" className="h-16 w-auto rounded-lg border border-white/10 shadow-lg" />
                                                 <button
-                                                    onClick={() => setSelectedImage(null)}
+                                                    onClick={() => {
+                                                        setSelectedImage(null);
+                                                        setSelectedFile(null);
+                                                    }}
                                                     className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-0.5 hover:bg-black border border-white/20 transition-colors"
                                                 >
                                                     <X size={12} />
