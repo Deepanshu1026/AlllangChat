@@ -12,7 +12,7 @@ import Login from './Login';
 import PricingModal from './PricingModal';
 import logo from '../assets/img/sensiq.png';
 import { speechToText, textToSpeech } from '../sarvamSpeech';
-
+import Tesseract from 'tesseract.js';
 const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
 const ChatWindow = () => {
@@ -318,7 +318,7 @@ const ChatWindow = () => {
         navigator.clipboard.writeText(text);
     };
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const file = e.target.files[0];
         if (file) {
             if (!file.type.startsWith('image/')) {
@@ -355,6 +355,13 @@ const ChatWindow = () => {
                     // Compress to JPEG with 0.7 quality
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     setSelectedImage(dataUrl);
+
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
+                    if (textareaRef.current) {
+                        textareaRef.current.focus();
+                    }
                 };
                 img.src = event.target.result;
             };
@@ -430,27 +437,34 @@ const ChatWindow = () => {
         }
 
         setInputText('');
+        const imageToProcess = selectedImage; // Keep local ref for OCR
         setSelectedImage(null); // Clear image after sending
         setIsTyping(true);
 
         try {
-            const history = updatedMessages.map(msg => {
-                if (msg.image) {
-                    const content = [];
-                    if (msg.text) {
-                        content.push({ type: "text", text: msg.isKey ? t(msg.text) : msg.text });
-                    }
-                    content.push({ type: "image_url", image_url: { url: msg.image } });
-                    return {
-                        role: msg.sender === 'user' ? 'user' : 'assistant',
-                        content: content
-                    };
-                } else {
-                    return {
-                        role: msg.sender === 'user' ? 'user' : 'assistant',
-                        content: msg.isKey ? t(msg.text) : msg.text
-                    };
+            // Perform background OCR if there is an image
+            let extractedText = "";
+            if (imageToProcess) {
+                try {
+                    const result = await Tesseract.recognize(imageToProcess, 'eng');
+                    extractedText = result.data.text.trim();
+                } catch (error) {
+                    console.error("Background OCR Error:", error);
                 }
+            }
+
+            const history = updatedMessages.map(msg => {
+                // If it's the message we just sent, and we managed to extract text
+                let textToUse = msg.isKey ? t(msg.text) : (msg.text || '');
+                if (msg.id === newMessage.id && extractedText) {
+                    textToUse = textToUse ? `${textToUse}\n\n[Extracted Details from Image]:\n${extractedText}` : `Please analyze this extracted text from the image:\n\n${extractedText}`;
+                }
+
+                // Sarvam API strictly requires content to be a string, not an array of mixed objects
+                return {
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: textToUse || "Attached image"
+                };
             });
 
             let apiMessages = history.slice(-10);
@@ -602,14 +616,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                 )}
 
                 <div className="flex items-end w-full p-2 md:p-3">
-                    {/* File Input (Hidden) */}
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleImageSelect}
-                        className="hidden"
-                    />
+                    {/* File Input is now handled globally */}
 
                     {/* Model Selector - Opens UP in floating input to stay visible */}
                     <ModelSelector
@@ -630,6 +637,15 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                     />
 
                     <div className="flex items-center gap-2 pl-2">
+                        {/* Attachment Button */}
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 ease-out active:scale-90"
+                            title="Upload Image"
+                        >
+                            <Paperclip size={20} />
+                        </button>
+
                         {/* Mic Button */}
                         <button
                             onClick={toggleListening}
@@ -708,6 +724,15 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0 relative">
+                {/* Global File Input */}
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    className="hidden"
+                />
+
                 {/* ... (header) */}
                 <header className="sticky top-0 z-10 border-b border-white/5 bg-[#212121]/80 backdrop-blur-md transition-all duration-300 pt-[--sat]">
                     <div className="flex items-center justify-between h-14 px-4 sm:px-6 pl-14">
@@ -813,85 +838,111 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
 
                             {/* Input Area Wrapper */}
                             <div className="w-full max-w-2xl px-4 relative z-20 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                                <div className={`relative flex items-center w-full p-1.5 md:p-2 bg-[#1a1a1a] border rounded-3xl md:rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
+                                <div className={`relative flex flex-col w-full p-1.5 md:p-2 bg-[#1a1a1a] border rounded-3xl min-h-[56px] shadow-2xl transition-all duration-300 ${isListening ? 'border-red-500/50 ring-2 ring-red-500/20' : 'border-white/10 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 hover:border-white/20'}`}>
 
-                                    {/* Model Selector - Opens DOWN in home screen search */}
-                                    <ModelSelector
-                                        selectedModel={selectedModel}
-                                        onModelChange={setSelectedModel}
-                                        position="bottom"
-                                    />
-
-                                    <div className="hidden md:block h-6 w-[1px] bg-white/10 mx-1" />
-
-                                    <textarea
-                                        ref={textareaRef}
-                                        value={inputText}
-                                        onChange={(e) => setInputText(e.target.value)}
-                                        onKeyDown={handleKeyPress}
-                                        placeholder={isListening ? "Listening..." : "Ask anything..."}
-                                        rows={1}
-                                        className="flex-1 max-h-[150px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 outline-none resize-none py-3 px-3 md:px-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-sm md:text-[15px]"
-                                        style={{ overflowY: 'auto' }}
-                                    />
-
-                                    <div className="flex items-center gap-1 pr-1 md:pr-2">
-                                        {/* Mic Button - Audio Wave Style */}
-                                        <button
-                                            onClick={toggleListening}
-                                            className={`p-2.5 rounded-full transition-all duration-300 ${isListening
-                                                ? 'bg-red-500 text-white animate-pulse'
-                                                : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                                            title="Voice Input"
-                                        >
-                                            {isListening ? <MicOff size={18} /> : (
-                                                <div className="flex items-end gap-[2px] h-4">
-                                                    <div className="w-[2px] h-2 bg-current rounded-full" />
-                                                    <div className="w-[2px] h-4 bg-current rounded-full" />
-                                                    <div className="w-[2px] h-3 bg-current rounded-full" />
-                                                    <div className="w-[2px] h-2 bg-current rounded-full" />
-                                                </div>
-                                            )}
-                                        </button>
-
-                                        {/* Send Button */}
-                                        <button
-                                            onClick={handleSend}
-                                            disabled={!inputText.trim() || isTyping}
-                                            className={`p-2.5 rounded-full transition-all duration-300 ${inputText.trim() && !isTyping
-                                                ? 'bg-white text-black hover:bg-gray-200 scale-100'
-                                                : 'bg-transparent text-gray-600 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            <ArrowUp size={18} strokeWidth={3} />
-                                        </button>
-                                    </div>
-
-                                    {/* Search Suggestion Dropdown */}
-                                    {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
-                                            <div className="py-2">
-                                                {suggestions
-                                                    .filter(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase())
-                                                    .slice(0, 5)
-                                                    .map((suggestion, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={() => handleSuggestionClick(suggestion.text)}
-                                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors group"
-                                                        >
-                                                            <span className="text-gray-500 group-hover:text-emerald-400 transition-colors">
-                                                                {suggestion.icon}
-                                                            </span>
-                                                            <span className="text-sm text-gray-300 group-hover:text-white truncate">
-                                                                {suggestion.text}
-                                                            </span>
-                                                            <Sparkles size={12} className="ml-auto text-emerald-500/0 group-hover:text-emerald-500/50 transition-all scale-0 group-hover:scale-100" />
-                                                        </button>
-                                                    ))}
+                                    {/* Image Preview Area for Home */}
+                                    {selectedImage && (
+                                        <div className="px-3 pt-2 pb-1">
+                                            <div className="relative inline-block">
+                                                <img src={selectedImage} alt="Preview" className="h-16 w-auto rounded-lg border border-white/10 shadow-lg" />
+                                                <button
+                                                    onClick={() => setSelectedImage(null)}
+                                                    className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-0.5 hover:bg-black border border-white/20 transition-colors"
+                                                >
+                                                    <X size={12} />
+                                                </button>
                                             </div>
                                         </div>
                                     )}
+
+                                    <div className="flex items-center w-full">
+                                        {/* Model Selector - Opens DOWN in home screen search */}
+                                        <ModelSelector
+                                            selectedModel={selectedModel}
+                                            onModelChange={setSelectedModel}
+                                            position="bottom"
+                                        />
+
+                                        <div className="hidden md:block h-6 w-[1px] bg-white/10 mx-1" />
+
+                                        <textarea
+                                            ref={textareaRef}
+                                            value={inputText}
+                                            onChange={(e) => setInputText(e.target.value)}
+                                            onKeyDown={handleKeyPress}
+                                            placeholder={isListening ? "Listening..." : "Ask anything..."}
+                                            rows={1}
+                                            className="flex-1 max-h-[150px] min-h-[24px] bg-transparent border-0 text-white placeholder-gray-500 focus:ring-0 outline-none resize-none py-3 px-3 md:px-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent text-sm md:text-[15px]"
+                                            style={{ overflowY: 'auto' }}
+                                        />
+
+                                        <div className="flex items-center gap-1 pr-1 md:pr-2">
+                                            {/* Attachment Button */}
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="p-2.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+                                                title="Upload Image"
+                                            >
+                                                <Paperclip size={18} />
+                                            </button>
+
+                                            {/* Mic Button - Audio Wave Style */}
+                                            <button
+                                                onClick={toggleListening}
+                                                className={`p-2.5 rounded-full transition-all duration-300 ${isListening
+                                                    ? 'bg-red-500 text-white animate-pulse'
+                                                    : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                                title="Voice Input"
+                                            >
+                                                {isListening ? <MicOff size={18} /> : (
+                                                    <div className="flex items-end gap-[2px] h-4">
+                                                        <div className="w-[2px] h-2 bg-current rounded-full" />
+                                                        <div className="w-[2px] h-4 bg-current rounded-full" />
+                                                        <div className="w-[2px] h-3 bg-current rounded-full" />
+                                                        <div className="w-[2px] h-2 bg-current rounded-full" />
+                                                    </div>
+                                                )}
+                                            </button>
+
+                                            {/* Send Button */}
+                                            <button
+                                                onClick={handleSend}
+                                                disabled={!inputText.trim() || isTyping}
+                                                className={`p-2.5 rounded-full transition-all duration-300 ${inputText.trim() && !isTyping
+                                                    ? 'bg-white text-black hover:bg-gray-200 scale-100'
+                                                    : 'bg-transparent text-gray-600 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                <ArrowUp size={18} strokeWidth={3} />
+                                            </button>
+                                        </div>
+
+                                        {/* Search Suggestion Dropdown */}
+                                        {inputText.trim() && suggestions.some(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase()) && (
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                                                <div className="py-2">
+                                                    {suggestions
+                                                        .filter(s => s.text.toLowerCase().includes(inputText.toLowerCase()) && s.text.toLowerCase() !== inputText.toLowerCase())
+                                                        .slice(0, 5)
+                                                        .map((suggestion, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                onClick={() => handleSuggestionClick(suggestion.text)}
+                                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors group"
+                                                            >
+                                                                <span className="text-gray-500 group-hover:text-emerald-400 transition-colors">
+                                                                    {suggestion.icon}
+                                                                </span>
+                                                                <span className="text-sm text-gray-300 group-hover:text-white truncate">
+                                                                    {suggestion.text}
+                                                                </span>
+                                                                <Sparkles size={12} className="ml-auto text-emerald-500/0 group-hover:text-emerald-500/50 transition-all scale-0 group-hover:scale-100" />
+                                                            </button>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
