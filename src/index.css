@@ -156,17 +156,15 @@
 @keyframes messageAppear {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
 .animate-message {
-  animation: messageAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: messageAppear 0.5s ease-out forwards;
 }
 
 @keyframes shimmer {
@@ -206,17 +204,86 @@
   animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Prose overrides for better markdown look */
-.prose pre {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+/* Prose overrides for better markdown look (ChatGPT style) */
+.chat-message-text {
+  font-family: Söhne, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  line-height: 1.6;
 }
 
-.prose p {
-  margin-bottom: 0.75em;
+.chat-message-text p {
+  margin-bottom: 1rem;
 }
 
-.prose ul {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+.chat-message-text p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-message-text pre {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chat-message-text ul {
+  list-style-type: outside;
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.chat-message-text ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.chat-message-text li {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+  padding-left: 0.25rem;
+}
+
+.chat-message-text li::marker {
+  color: #ECECF1;
+}
+
+.chat-message-text strong {
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+
+.chat-message-text table {
+  width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-collapse: collapse;
+}
+
+.chat-message-text th,
+.chat-message-text td {
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 0.5rem 1rem !important;
+  text-align: left;
+}
+
+.chat-message-text th {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  font-weight: 600;
+  color: #fff !important;
+}
+
+.chat-message-text code {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.chat-message-text pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit !important;
 }

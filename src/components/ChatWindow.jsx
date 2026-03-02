@@ -491,7 +491,7 @@ const ChatWindow = () => {
                     messages: [
                         {
                             role: "system",
-                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and concise. Use Indian cultural context where appropriate in ${targetLanguage}. Formatting: Use markdown (bold, lists, code blocks) for clarity. IMPORTANT: If providing code, provide the FULL and COMPLETE code without placeholders or truncation.
+                            content: `You are a helpful Indian AI assistant. You MUST reply in ${targetLanguage} only. Even if the user asks in English or another language, your response must be in ${targetLanguage}. Keep your answers helpful, friendly, and clear. Formatting: Use standard markdown like ChatGPT. Use tables ONLY IF the user explicitly asks for differences, comparisons, or tabular data. Otherwise, respond naturally in text or lists according to the question. Use bulleted or numbered lists for steps, and bold text for emphasis. IMPORTANT: If providing code, provide the FULL and COMPLETE code without placeholders or truncation.
 
 At the very end of your response, provide 3 short, relevant follow-up questions in a JSON block like this:
 \`\`\`json
@@ -1019,7 +1019,7 @@ At the very end of your response, provide 3 short, relevant follow-up questions 
                                                 </div>
                                             )}
 
-                                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-emerald-400 chat-message-text">
+                                            <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d0d0d] prose-pre:rounded-xl max-w-none text-[15px] prose-strong:text-white prose-table:border-collapse prose-th:border prose-th:border-white/20 prose-th:bg-white/5 prose-td:border prose-td:border-white/20 prose-th:p-3 prose-td:p-3 prose-li:my-1 prose-ul:list-disc prose-ol:list-decimal chat-message-text font-sans">
                                                 {msg.image && (
                                                     <div className="mb-3">
                                                         <img src={msg.image} alt="Uploaded content" className="max-h-[300px] max-w-full rounded-xl border border-white/10 bg-black/20" />
