@@ -41,11 +41,10 @@ const PricingModal = ({ onClose }) => {
                         .eq('id', currentUser.uid);
 
                     if (error) {
-                        alert("Error updating subscription. Please contact support.");
+                        console.error("Error updating subscription:", error);
                     } else {
                         await fetchUserData();
                         onClose();
-                        alert("Welcome to Sensiq Pro!");
                     }
                 },
                 prefill: {
@@ -59,7 +58,7 @@ const PricingModal = ({ onClose }) => {
 
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (response) {
-                alert("Payment Failed: " + response.error.description);
+                console.error("Payment Failed:", response.error.description);
             });
             rzp.open();
         } catch (error) {
