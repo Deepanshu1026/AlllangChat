@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanelLeftClose, PanelLeft, Plus, MessageSquare, Trash2, Settings, LogOut } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Plus, MessageSquare, Trash2, Settings, LogOut, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ShareAccessModal from './ShareAccessModal';
 
 export default function Sidebar({ conversations, currentConversation, onNewChat, onSelectConversation, onDeleteConversation }) {
     const { t } = useTranslation();
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, userData } = useAuth();
     const [isOpen, setIsOpen] = useState(window.innerWidth >= 768);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -125,6 +127,19 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
                     </div>
                 </div>
 
+                {/* Share Pro Access Button (Pro Only) */}
+                {userData?.plan === 'pro' && (
+                    <div className={`px-3 mb-2 opacity-100 transition-opacity duration-300 ${!isOpen && 'opacity-0'}`}>
+                        <button
+                            onClick={() => setShowShareModal(true)}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500 rounded-lg text-emerald-500 hover:text-white text-xs font-bold transition-all border border-emerald-500/20 active:scale-95"
+                        >
+                            <Share2 size={14} />
+                            <span>Share Pro Access</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Footer User Profile */}
                 <div className={`p-3 border-t border-white/5 mt-auto bg-[#171717] z-10 transition-opacity duration-300 ${!isOpen && 'opacity-0'}`}>
                     <div className="flex items-center gap-2 group">
@@ -155,6 +170,11 @@ export default function Sidebar({ conversations, currentConversation, onNewChat,
                     </div>
                 </div>
             </aside>
+
+            {/* Share Access Modal */}
+            {showShareModal && (
+                <ShareAccessModal onClose={() => setShowShareModal(false)} />
+            )}
 
             {/* Mobile Overlay */}
             {isMobile && isOpen && (

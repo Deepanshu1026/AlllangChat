@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon, Rocket, Phone, PhoneOff, Volume2, VolumeX, Pencil } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Copy, ArrowUp, Loader2, Mic, MicOff, Paperclip, X, Image as ImageIcon, Rocket, Phone, PhoneOff, Volume2, VolumeX, Pencil, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -17,7 +17,7 @@ const API_KEY = import.meta.env.VITE_SARVAM_API_KEY;
 
 const ChatWindow = () => {
     const { t, i18n } = useTranslation();
-    const { currentUser } = useAuth();
+    const { currentUser, userData, fetchUserData, incrementUsage } = useAuth();
 
     // Conversation management
     const [conversations, setConversations] = useState([]);
@@ -36,7 +36,6 @@ const ChatWindow = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedModel, setSelectedModel] = useState('sarvam-m');
-    const { userData, incrementUsage } = useAuth();
     const searchCountRef = useRef(0);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -181,6 +180,68 @@ const ChatWindow = () => {
         };
 
         syncAndFetch();
+    }, [currentUser]);
+
+    // Handle Invitation Acceptance
+    useEffect(() => {
+        const handleInviteToken = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('inviteToken');
+
+            if (token) {
+                if (!currentUser) {
+                    alert("Please log in to accept the Pro Access invitation.");
+                    setShowLoginModal(true);
+                    return;
+                }
+
+                try {
+                    // 1. Check if token is valid and pending
+                    const { data: invite, error: fetchError } = await supabase
+                        .from('invitations')
+                        .select('*')
+                        .eq('token', token)
+                        .eq('status', 'pending')
+                        .single();
+
+                    if (fetchError || !invite) {
+                        console.error("Invalid or already used token");
+                        return;
+                    }
+
+                    // 2. Update user plan
+                    const { error: updateError } = await supabase
+                        .from('users')
+                        .update({
+                            plan: 'pro',
+                            usage_limit: 999999,
+                            subscription_status: 'active'
+                        })
+                        .eq('id', currentUser.uid);
+
+                    if (updateError) throw updateError;
+
+                    // 3. Mark invite as accepted
+                    await supabase
+                        .from('invitations')
+                        .update({ status: 'accepted', activated_at: new Date().toISOString() })
+                        .eq('id', invite.id);
+
+                    // 4. Refresh user data
+                    await fetchUserData();
+
+                    // 5. Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    alert("Congratulations! You now have Pro Access thanks to your friend!");
+
+                } catch (err) {
+                    console.error("Accept invite error:", err);
+                }
+            }
+        };
+
+        handleInviteToken();
     }, [currentUser]);
 
     useEffect(() => {
