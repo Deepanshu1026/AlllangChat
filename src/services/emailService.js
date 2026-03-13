@@ -1,9 +1,5 @@
-const BREVO_API_KEY = import.meta.env.VITE_BREVO_API_KEY;
-const SENDER_EMAIL = 'bishtdepanshu321@gmail.com';
-const SENDER_NAME = 'AlllangChat Pro';
-
 /**
- * Sends a transactional email using Brevo (formerly Sendinblue) API
+ * Sends a transactional email using our secure Vercel API
  * @param {string} toEmail - Recipient's email
  * @param {string} toName - Recipient's name
  * @param {string} subject - Email subject
@@ -12,35 +8,25 @@ const SENDER_NAME = 'AlllangChat Pro';
  */
 export const sendEmail = async (toEmail, toName, subject, htmlContent) => {
     try {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        // Now calling our OWN secure backend function instead of Brevo directly
+        const response = await fetch('/api/send-invite', {
             method: 'POST',
             headers: {
-                'accept': 'application/json',
-                'api-key': BREVO_API_KEY,
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: {
-                    name: SENDER_NAME,
-                    email: SENDER_EMAIL
-                },
-                to: [
-                    {
-                        email: toEmail,
-                        name: toName
-                    }
-                ],
-                subject: subject,
-                htmlContent: htmlContent
+                toEmail,
+                toName,
+                subject,
+                htmlContent
             })
         });
 
         const data = await response.json();
 
-        if (response.ok) {
-            return { status: true, message: 'Email sent successfully', data };
+        if (data.status) {
+            return { status: true, message: 'Email sent successfully' };
         } else {
-            console.error('Brevo API Error:', data);
             return { status: false, message: data.message || 'Failed to send email' };
         }
     } catch (error) {
