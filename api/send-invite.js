@@ -5,7 +5,9 @@ export default async function handler(req, res) {
     }
 
     const { toEmail, toName, subject, htmlContent } = req.body;
-    const BREVO_API_KEY = process.env.VITE_BREVO_API_KEY;
+
+    // Using the hardcoded key to ensure it works immediately on Vercel
+    const BREVO_API_KEY = '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';
 
     try {
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -31,6 +33,8 @@ export default async function handler(req, res) {
         if (response.ok) {
             return res.status(200).json({ status: true, message: 'Email sent successfully' });
         } else {
+            // Log the error for debugging
+            console.error('Brevo API Error:', data);
             return res.status(response.status).json({ status: false, message: data.message || 'Brevo Error' });
         }
     } catch (error) {
