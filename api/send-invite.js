@@ -15,6 +15,7 @@ export default async function handler(req, res) {
             headers: {
                 'accept': 'application/json',
                 'api-key': BREVO_API_KEY,
+                'x-sib-api-key': BREVO_API_KEY, // Alternative header
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
