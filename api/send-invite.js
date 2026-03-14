@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         } else {
             // Log the error for debugging
             console.error('Brevo API Error:', data);
-            return res.status(response.status).json({ status: false, message: data.message || 'Brevo Error' });
+            return res.status(response.status).json({ status: false, message: `[Backend] ${data.message || 'Brevo Error'}` });
         }
     } catch (error) {
         return res.status(500).json({ status: false, message: error.message });
